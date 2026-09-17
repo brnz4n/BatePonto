@@ -1,0 +1,91 @@
+import React from 'react'
+import { Fingerprint, Loader2, HelpCircle } from 'lucide-react'
+import type { PunchType } from '../types/punch.types'
+
+interface PunchButtonProps {
+  punchType: PunchType
+  label: string
+  sublabel: string
+  isPunching: boolean
+  onClick: () => void
+  onOpenOverrideModal?: () => void
+}
+
+export const PunchButton: React.FC<PunchButtonProps> = ({
+  punchType: _punchType,
+  label,
+  sublabel,
+  isPunching,
+  onClick,
+  onOpenOverrideModal,
+}) => {
+  return (
+    <div className="relative flex flex-col items-center justify-center my-6">
+      {/* Halo pulsante ao redor do botão */}
+      <div className="absolute w-56 h-56 rounded-full bg-[#722F37]/30 blur-xl animate-pulse pointer-events-none" />
+
+      {/* Anel de onda pulsante */}
+      <div className="absolute w-52 h-52 rounded-full border border-[#722F37]/40 animate-pulse-ring pointer-events-none" />
+
+      {/* Botão Gigante de Ação Única */}
+      <button
+        onClick={onClick}
+        disabled={isPunching}
+        aria-label={label}
+        className={`
+          relative z-10 w-52 h-52 rounded-full
+          bg-gradient-to-br from-[#8C3843] via-[#722F37] to-[#4A151B]
+          hover:from-[#9C3F4B] hover:to-[#5C1B23]
+          active:scale-95 active:shadow-inner
+          transition-all duration-200 ease-out
+          shadow-[0_12px_36px_rgba(114,47,55,0.45)]
+          border-4 border-slate-900/50
+          flex flex-col items-center justify-center p-4 text-center select-none
+          cursor-pointer disabled:opacity-75 disabled:cursor-wait
+        `}
+      >
+        {/* Reflexo de vidro interno no topo */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-32 h-16 bg-white/10 rounded-full blur-[2px] pointer-events-none" />
+
+        {isPunching ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-12 h-12 text-white animate-spin" />
+            <span className="text-white text-xs font-semibold tracking-wider uppercase">
+              Registrando...
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="p-3 bg-white/10 rounded-full mb-1 shadow-inner">
+              <Fingerprint className="w-9 h-9 text-white drop-shadow-sm" />
+            </div>
+
+            <span className="text-white font-bold text-lg leading-tight drop-shadow-md px-2 max-w-[170px]">
+              {label}
+            </span>
+
+            <span className="text-slate-200/80 text-[10px] font-medium tracking-wide uppercase mt-1">
+              Toque para registrar
+            </span>
+          </>
+        )}
+      </button>
+
+      {/* Legenda explicativa contextual abaixo do botão */}
+      <div className="mt-3 text-center max-w-xs px-4">
+        <p className="text-xs text-slate-400 font-medium">{sublabel}</p>
+
+        {onOpenOverrideModal && (
+          <button
+            type="button"
+            onClick={onOpenOverrideModal}
+            className="mt-2 text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-2 transition-colors cursor-pointer inline-flex items-center justify-center gap-1 mx-auto"
+          >
+            <HelpCircle className="w-3 h-3 text-[#c25b68]" />
+            <span>Esqueceu o ponto anterior? Alterar tipo</span>
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}

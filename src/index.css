@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-950: #050d18;
+  --color-navy-900: #0a192f;
+  --color-navy-850: #0d203d;
+  --color-navy-800: #112240;
+  --color-navy-700: #1d3557;
+  --color-navy-600: #2a4b7c;
+
+  --color-wine-950: #3d1419;
+  --color-wine-900: #4a151b;
+  --color-wine-800: #5c1b23;
+  --color-wine-700: #722f37;
+  --color-wine-600: #8c3843;
+  --color-wine-500: #a74350;
+  --color-wine-400: #c25b68;
+
+  --color-silver-50: #f8fafc;
+  --color-silver-100: #f1f5f9;
+  --color-silver-200: #e2e8f0;
+  --color-silver-300: #cbd5e1;
+  --color-silver-400: #94a3b8;
+}
+
+:root {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #0a192f;
+  color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  overflow-x: hidden;
+}
+
+/* Custom Glassmorphism & Animations */

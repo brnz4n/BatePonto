@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A192F" />
+      <stop offset="100%" stop-color="#050D18" />
+    </linearGradient>
+    <linearGradient id="wineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8C3843" />
+      <stop offset="100%" stop-color="#722F37" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#722F37" flood-opacity="0.5" />
+    </filter>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <!-- Inner subtle border -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="none" stroke="#1E293B" stroke-width="4" />
+  
+  <!-- Outer Clock Circle -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#334155" stroke-width="12" stroke-dasharray="8 12" />
+  
+  <!-- Inner Glowing Wine Circle -->
+  <circle cx="256" cy="256" r="120" fill="url(#wineGrad)" filter="url(#glow)" />
+  
+  <!-- Stylized "A" and Clock Hands -->
+  <path d="M256 180 V256 L310 290" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="256" cy="256" r="12" fill="#FFFFFF" />
+  
+  <!-- Small GPS locator ping at top right of the badge -->
+  <circle cx="360" cy="150" r="16" fill="#10B981" />
+  <circle cx="360" cy="150" r="28" fill="none" stroke="#10B981" stroke-width="4" opacity="0.6" />
+</svg>
