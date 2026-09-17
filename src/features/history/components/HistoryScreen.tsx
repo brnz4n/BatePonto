@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { FileDown, Loader2, AlertCircle, History as HistoryIcon, CheckCircle2, Clock } from 'lucide-react'
+import { FileDown, Loader2, AlertCircle, History as HistoryIcon, CheckCircle2, Clock, CloudOff } from 'lucide-react'
 import { getPunchesInRange } from '../../sync/db/localDb'
 import { fetchAfdRows, buildAfdFileContent, downloadTextFile } from '../services/afdExportService'
+import { fetchRemotePunches, mergePunches } from '../services/historyDataService'
 import { PUNCH_TYPE_SHORT } from '../../punch/types/punch.types'
 import type { LocalPunchRecord } from '../../punch/types/punch.types'
 import type { AuthenticatedContext } from '../../../app/AuthenticatedLayout'
@@ -28,14 +29,24 @@ export function HistoryScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [loadNotice, setLoadNotice] = useState<string | null>(null)
 
   const { startIso, endIso } = useMemo(() => monthRange(year, month), [year, month])
 
   const loadPunches = useCallback(async () => {
     setIsLoading(true)
+    setLoadNotice(null)
+
+    // O IndexedDB local só guarda "hoje" e o que ainda não sincronizou — o Supabase é a
+    // fonte da verdade pro histórico completo. Sem isso, trocar de aparelho/URL de preview
+    // ou perder o IndexedDB local (ITP do Safari, etc.) faz parecer que os pontos sumiram.
+    const localRecords = await getPunchesInRange(profile.id, startIso, endIso)
     try {
-      const records = await getPunchesInRange(profile.id, startIso, endIso)
-      setPunches(records)
+      const remoteRecords = await fetchRemotePunches(profile.id, startIso, endIso)
+      setPunches(mergePunches(remoteRecords, localRecords))
+    } catch {
+      setLoadNotice('Sem conexão com o servidor agora — mostrando só o que está salvo neste dispositivo.')
+      setPunches(localRecords)
     } finally {
       setIsLoading(false)
     }
@@ -71,6 +82,13 @@ export function HistoryScreen() {
         <HistoryIcon className="w-4.5 h-4.5 text-[#c25b68]" />
         <h1 className="text-base font-bold">Histórico de Pontos</h1>
       </div>
+
+      {loadNotice && (
+        <div className="p-2.5 bg-amber-950/60 border border-amber-800/80 rounded-xl text-xs text-amber-200 flex items-center gap-2">
+          <CloudOff className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>{loadNotice}</span>
+        </div>
+      )}
 
       {/* Filtros de Mês e Ano */}
       <div className="flex gap-2">
