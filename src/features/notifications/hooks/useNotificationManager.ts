@@ -47,7 +47,7 @@ export function useNotificationManager() {
     if (delay50 > 0) {
       setTimeout(() => {
         if (Notification.permission === 'granted') {
-          new Notification('🍽️ Intervalo Quase Encerrado!', {
+          new Notification('Intervalo Quase Encerrado!', {
             body: 'Faltam 10 minutos para completar 1 hora de almoço. Prepare-se para bater o retorno.',
             icon: '/pwa-icon.svg',
           })
@@ -59,7 +59,7 @@ export function useNotificationManager() {
     if (delay60 > 0) {
       setTimeout(() => {
         if (Notification.permission === 'granted') {
-          new Notification('⏰ Fim do Intervalo de Almoço', {
+          new Notification('Fim do Intervalo de Almoço', {
             body: 'Seu intervalo legal de 1h foi cumprido. Abra o Atlas Ponto para registrar o retorno!',
             icon: '/pwa-icon.svg',
           })

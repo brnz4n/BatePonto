@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Clock, MapPin } from 'lucide-react'
+import { Clock, MapPin, Building2, AlertTriangle } from 'lucide-react'
 
 interface LiveClockProps {
   hasGpsSignal?: boolean
   accuracyMeters?: number
+  geofence?: { distanceMeters: number; isWithinBounds: boolean } | null
 }
 
-export const LiveClock: React.FC<LiveClockProps> = ({ hasGpsSignal, accuracyMeters }) => {
+export const LiveClock: React.FC<LiveClockProps> = ({ hasGpsSignal, accuracyMeters, geofence }) => {
   const [time, setTime] = useState<Date>(new Date())
 
   useEffect(() => {
@@ -62,6 +63,28 @@ export const LiveClock: React.FC<LiveClockProps> = ({ hasGpsSignal, accuracyMete
           <span className="text-slate-500">Alta Precisão</span>
         )}
       </div>
+
+      {geofence && (
+        <div
+          className={`mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-semibold px-2 py-1.5 rounded-lg border ${
+            geofence.isWithinBounds
+              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
+              : 'bg-amber-950/60 text-amber-300 border-amber-800/60'
+          }`}
+          title="Distância calculada em tempo real até a sede da RFeitosa Group"
+        >
+          {geofence.isWithinBounds ? (
+            <Building2 className="w-3.5 h-3.5" />
+          ) : (
+            <AlertTriangle className="w-3.5 h-3.5" />
+          )}
+          <span>
+            {geofence.isWithinBounds
+              ? `Na sede (${geofence.distanceMeters}m)`
+              : `Fora da sede — ${geofence.distanceMeters}m de distância`}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

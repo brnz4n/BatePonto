@@ -1,36 +1,56 @@
 import { useState, useEffect, useCallback } from 'react'
 import { processSyncQueue } from '../services/syncQueueService'
-import { getPendingPunchesCount } from '../db/localDb'
+import {
+  getPendingPunchesCount,
+  getFailedPunchesCount,
+  getPausedAuthPunchesCount,
+  retryFailedPunches,
+} from '../db/localDb'
 
 export function useSyncManager() {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine)
   const [pendingCount, setPendingCount] = useState<number>(0)
+  const [failedCount, setFailedCount] = useState<number>(0)
+  const [pausedAuthCount, setPausedAuthCount] = useState<number>(0)
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
 
-  const refreshPendingCount = useCallback(async () => {
+  const refreshCounts = useCallback(async () => {
     try {
-      const count = await getPendingPunchesCount()
-      setPendingCount(count)
+      const [pending, failed, pausedAuth] = await Promise.all([
+        getPendingPunchesCount(),
+        getFailedPunchesCount(),
+        getPausedAuthPunchesCount(),
+      ])
+      setPendingCount(pending)
+      setFailedCount(failed)
+      setPausedAuthCount(pausedAuth)
     } catch {
       // Ignora erro de leitura em caso de inicialização rápida
     }
   }, [])
 
   const triggerSync = useCallback(async () => {
-    if (!navigator.onLine || isSyncInProgressFlag) return
+    if (!navigator.onLine) return
     setIsSyncing(true)
+
     try {
       await processSyncQueue()
-      await refreshPendingCount()
+      await refreshCounts()
       setLastSyncTime(new Date())
     } finally {
       setIsSyncing(false)
     }
-  }, [refreshPendingCount])
+  }, [refreshCounts])
+
+  const retryFailed = useCallback(async () => {
+    await retryFailedPunches()
+    await refreshCounts()
+    await triggerSync()
+  }, [refreshCounts, triggerSync])
 
   useEffect(() => {
-    refreshPendingCount()
+    refreshCounts()
 
     const handleOnline = () => {
       setIsOnline(true)
@@ -46,7 +66,7 @@ export function useSyncManager() {
 
     // Intervalo de verificação a cada 15 segundos se houver pendências
     const interval = setInterval(() => {
-      refreshPendingCount()
+      refreshCounts()
       if (navigator.onLine) {
         triggerSync()
       }
@@ -57,16 +77,17 @@ export function useSyncManager() {
       window.removeEventListener('offline', handleOffline)
       clearInterval(interval)
     }
-  }, [refreshPendingCount, triggerSync])
+  }, [refreshCounts, triggerSync])
 
   return {
     isOnline,
     pendingCount,
+    failedCount,
+    pausedAuthCount,
     isSyncing,
     lastSyncTime,
     triggerSync,
-    refreshPendingCount,
+    retryFailed,
+    refreshPendingCount: refreshCounts,
   }
 }
-
-let isSyncInProgressFlag = false

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Smartphone, Building2, Bell, BellRing } from 'lucide-react'
+import { Smartphone, Building2, Bell, BellRing, LogOut } from 'lucide-react'
 import { SyncBadge } from './SyncBadge'
 import type { EmployeeProfile } from '../../features/punch/types/punch.types'
 
@@ -13,6 +13,7 @@ interface HeaderProps {
   onRequestNotification?: () => void
   onManualSync: () => void
   onOpenInstallModal: () => void
+  onSignOut?: () => void
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRequestNotification,
   onManualSync,
   onOpenInstallModal,
+  onSignOut,
 }) => {
   const initials = profile.name
     .split(' ')
@@ -106,6 +108,17 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {initials}
           </div>
+
+          {onSignOut && (
+            <button
+              onClick={onSignOut}
+              className="p-1.5 text-slate-400 hover:text-red-400 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Sair da conta"
+              aria-label="Sair da conta"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </header>

@@ -30,32 +30,42 @@ export function usePunchStateMachine(userId: string): StateMachineResult {
     refreshTodayPunches()
   }, [refreshTodayPunches])
 
-  const count = todayPunches.length
+  // Deduz o próximo passo a partir do TIPO da última batida real, não da quantidade de batidas —
+  // contar posições (1ª, 2ª, 3ª...) quebra assim que há um ajuste manual fora da sequência padrão
+  // (ex: ENTRADA seguida de EXTRA continuaria sendo lida como "2ª batida = volta do intervalo").
+  const lastPunchType = todayPunches[todayPunches.length - 1]?.punchType
 
   let nextPunchType: PunchType = 'ENTRADA'
   let nextActionDesc = 'Início da sua jornada de trabalho diária'
   let currentWorkStatus: StateMachineResult['currentWorkStatus'] = 'FORA_DE_EXPEDIENTE'
 
-  if (count === 0) {
-    nextPunchType = 'ENTRADA'
-    nextActionDesc = 'Início da sua jornada de trabalho diária'
-    currentWorkStatus = 'FORA_DE_EXPEDIENTE'
-  } else if (count === 1) {
-    nextPunchType = 'SAIDA_INTERVALO'
-    nextActionDesc = 'Início do intervalo intrajornada (almoço/descanso)'
-    currentWorkStatus = 'TRABALHANDO'
-  } else if (count === 2) {
-    nextPunchType = 'RETORNO_INTERVALO'
-    nextActionDesc = 'Retorno do intervalo para continuidade da jornada'
-    currentWorkStatus = 'EM_INTERVALO'
-  } else if (count === 3) {
-    nextPunchType = 'SAIDA'
-    nextActionDesc = 'Encerramento regular do expediente diário'
-    currentWorkStatus = 'TRABALHANDO'
-  } else {
-    nextPunchType = 'EXTRA'
-    nextActionDesc = 'Registro complementar ou extraordinário'
-    currentWorkStatus = 'JORNADA_ENCERRADA'
+  switch (lastPunchType) {
+    case undefined:
+      nextPunchType = 'ENTRADA'
+      nextActionDesc = 'Início da sua jornada de trabalho diária'
+      currentWorkStatus = 'FORA_DE_EXPEDIENTE'
+      break
+    case 'ENTRADA':
+      nextPunchType = 'SAIDA_INTERVALO'
+      nextActionDesc = 'Início do intervalo intrajornada (almoço/descanso)'
+      currentWorkStatus = 'TRABALHANDO'
+      break
+    case 'SAIDA_INTERVALO':
+      nextPunchType = 'RETORNO_INTERVALO'
+      nextActionDesc = 'Retorno do intervalo para continuidade da jornada'
+      currentWorkStatus = 'EM_INTERVALO'
+      break
+    case 'RETORNO_INTERVALO':
+      nextPunchType = 'SAIDA'
+      nextActionDesc = 'Encerramento regular do expediente diário'
+      currentWorkStatus = 'TRABALHANDO'
+      break
+    case 'SAIDA':
+    case 'EXTRA':
+      nextPunchType = 'EXTRA'
+      nextActionDesc = 'Registro complementar ou extraordinário'
+      currentWorkStatus = 'JORNADA_ENCERRADA'
+      break
   }
 
   const nextActionLabel = PUNCH_TYPE_LABELS[nextPunchType]

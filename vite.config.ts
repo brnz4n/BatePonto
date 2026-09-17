@@ -28,7 +28,11 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Necessário para as rotas client-side (/login, /forgot-password, /reset-password)
+        // resolverem para o index.html quando abertas offline ou via deep link (ex: link de e-mail).
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//]
       }
     })
   ]

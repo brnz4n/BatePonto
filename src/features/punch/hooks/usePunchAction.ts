@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react'
 import { db } from '../../sync/db/localDb'
 import { punchPayloadSchema } from '../schemas/punch.schema'
 import { checkVelocityAnomaly } from '../../../shared/utils/antiFraud'
+import { checkGeofence } from '../../../shared/utils/geofence'
 import type { LocalPunchRecord, PunchType } from '../types/punch.types'
-import { triggerConfetti } from '../../../shared/utils/confetti'
 
 interface UsePunchActionProps {
   userId: string
+  colaboradorId: string | undefined
   nextPunchType: PunchType
   todayPunches: LocalPunchRecord[]
   onSuccess: (record: LocalPunchRecord) => void
@@ -23,6 +24,7 @@ interface UsePunchActionProps {
 
 export function usePunchAction({
   userId,
+  colaboradorId,
   nextPunchType,
   todayPunches,
   onSuccess,
@@ -37,6 +39,14 @@ export function usePunchAction({
   const executePunch = useCallback(
     async (customType?: PunchType, justification?: string) => {
       if (isPunching) return
+
+      // Sem colaborador_id não há como popular o AFD nem manter a integridade referencial —
+      // bloqueia a batida em vez de gravar um registro que nunca vai aparecer na auditoria do RH.
+      if (!colaboradorId) {
+        setErrorMessage('Não foi possível identificar seu cadastro de colaborador. Recarregue o app e tente novamente.')
+        return
+      }
+
       setIsPunching(true)
       setErrorMessage(null)
 
@@ -45,53 +55,17 @@ export function usePunchAction({
         const clientIso = new Date().toISOString()
         const performanceNow = performance.now()
         const isOffline = !navigator.onLine
-
         const effectivePunchType = customType || nextPunchType
-
-        // Captura geolocalização com alta precisão (não-bloqueante / soft-audit)
-        const geoResult = await getPosition()
-
-        // Verificação de anomalia de velocidade com o último ponto registrado
-        let teleportationSuspect = false
-        let calculatedSpeedKmh: number | undefined
-
-        if (geoResult.coords && todayPunches.length > 0) {
-          const lastPunchWithCoords = [...todayPunches]
-            .reverse()
-            .find((p) => p.coords?.latitude && p.coords?.longitude)
-
-          if (lastPunchWithCoords?.coords) {
-            const anomaly = checkVelocityAnomaly(
-              {
-                lat: lastPunchWithCoords.coords.latitude,
-                lng: lastPunchWithCoords.coords.longitude,
-                timestamp: new Date(lastPunchWithCoords.clientTimestamp).getTime(),
-              },
-              {
-                lat: geoResult.coords.latitude,
-                lng: geoResult.coords.longitude,
-                timestamp: new Date(clientIso).getTime(),
-              }
-            )
-            teleportationSuspect = anomaly.isAnomaly
-            calculatedSpeedKmh = anomaly.speedKmh
-          }
-        }
 
         const rawPayload = {
           id: punchId,
           userId,
+          colaboradorId,
           punchType: effectivePunchType,
           clientTimestamp: clientIso,
           performanceNow,
-          coords: geoResult.coords,
           isOffline,
           auditMetadata: {
-            isMockSuspect: geoResult.isMockSuspect,
-            mockReason: geoResult.mockReason,
-            teleportationSuspect,
-            calculatedSpeedKmh,
-            geoError: geoResult.error,
             userAgent: navigator.userAgent,
             isManualOverride: !!customType,
             originalDeducedType: customType ? nextPunchType : undefined,
@@ -111,42 +85,33 @@ export function usePunchAction({
           retryCount: 0,
         }
 
-        // Gravação local imediata no IndexedDB
+        // Gravação local imediata no IndexedDB — fricção zero: nada aqui espera o GPS.
         await db.punches.add(newRecord)
-
-        // Atualiza linha do tempo local imediatamente
         await refreshTodayPunches()
 
-        // Se for saída de almoço, dispara agendamento de notificação
         if (effectivePunchType === 'SAIDA_INTERVALO' && onLunchRegistered) {
           onLunchRegistered(clientIso)
         }
 
-        // Feedback háptico em smartphones que suportam Vibration API
         if ('vibrate' in navigator) {
-          navigator.vibrate([40, 60, 40])
+          navigator.vibrate(200)
         }
-
-        // Efeito de celebração visual com confetes nativos
-        triggerConfetti()
 
         onSuccess(newRecord)
+        setIsPunching(false)
 
-        // Se houver conexão, dispara sincronização assíncrona em background
-        if (navigator.onLine) {
-          triggerSync().catch(() => {
-            // Falhas de rede serão resolvidas pelo SyncManager
-          })
-        }
+        // Geolocalização + geofencing + antifraude rodam em background e só então
+        // disparam a sincronização — não bloqueiam a confirmação da batida (soft-audit).
+        attachGeoDataInBackground(punchId, clientIso, todayPunches, getPosition, refreshTodayPunches, triggerSync)
       } catch (err: any) {
         setErrorMessage(err?.message || 'Falha ao registrar ponto')
-      } finally {
         setIsPunching(false)
       }
     },
     [
       isPunching,
       userId,
+      colaboradorId,
       nextPunchType,
       todayPunches,
       getPosition,
@@ -161,5 +126,76 @@ export function usePunchAction({
     executePunch,
     isPunching,
     errorMessage,
+  }
+}
+
+async function attachGeoDataInBackground(
+  punchId: string,
+  clientIso: string,
+  previousPunches: LocalPunchRecord[],
+  getPosition: UsePunchActionProps['getPosition'],
+  refreshTodayPunches: () => Promise<void>,
+  triggerSync: () => Promise<void>
+) {
+  try {
+    const geoResult = await getPosition()
+
+    let isOutOfBounds: boolean | undefined
+    let distanceFromHqMeters: number | undefined
+
+    if (geoResult.coords) {
+      const geofence = checkGeofence(geoResult.coords.latitude, geoResult.coords.longitude)
+      isOutOfBounds = !geofence.isWithinBounds
+      distanceFromHqMeters = geofence.distanceMeters
+    }
+
+    let teleportationSuspect = false
+    let calculatedSpeedKmh: number | undefined
+
+    if (geoResult.coords && previousPunches.length > 0) {
+      const lastPunchWithCoords = [...previousPunches].reverse().find((p) => p.coords?.latitude && p.coords?.longitude)
+
+      if (lastPunchWithCoords?.coords) {
+        const anomaly = checkVelocityAnomaly(
+          {
+            lat: lastPunchWithCoords.coords.latitude,
+            lng: lastPunchWithCoords.coords.longitude,
+            timestamp: new Date(lastPunchWithCoords.clientTimestamp).getTime(),
+          },
+          {
+            lat: geoResult.coords.latitude,
+            lng: geoResult.coords.longitude,
+            timestamp: new Date(clientIso).getTime(),
+          }
+        )
+        teleportationSuspect = anomaly.isAnomaly
+        calculatedSpeedKmh = anomaly.speedKmh
+      }
+    }
+
+    const existing = await db.punches.get(punchId)
+    if (!existing) return // registro pode ter sido removido (ex: override) antes do GPS resolver
+
+    await db.punches.update(punchId, {
+      coords: geoResult.coords,
+      auditMetadata: {
+        ...existing.auditMetadata,
+        isMockSuspect: geoResult.isMockSuspect,
+        mockReason: geoResult.mockReason,
+        teleportationSuspect,
+        calculatedSpeedKmh,
+        geoError: geoResult.error,
+        isOutOfBounds,
+        distanceFromHqMeters,
+      },
+    })
+
+    await refreshTodayPunches()
+  } finally {
+    if (navigator.onLine) {
+      triggerSync().catch(() => {
+        // Falhas de rede serão resolvidas pelo SyncManager
+      })
+    }
   }
 }

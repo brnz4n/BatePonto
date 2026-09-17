@@ -9,6 +9,7 @@ export const punchCoordinatesSchema = z.object({
 export const punchPayloadSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().min(1, 'ID de usuário obrigatório'),
+  colaboradorId: z.string().min(1, 'ID de colaborador obrigatório'),
   punchType: z.enum(['ENTRADA', 'SAIDA_INTERVALO', 'RETORNO_INTERVALO', 'SAIDA', 'EXTRA']),
   clientTimestamp: z.string().datetime(),
   performanceNow: z.number().nonnegative(),

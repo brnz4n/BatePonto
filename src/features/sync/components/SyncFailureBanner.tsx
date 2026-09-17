@@ -1,0 +1,41 @@
+import React, { useState } from 'react'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
+
+interface SyncFailureBannerProps {
+  failedCount: number
+  onRetry: () => Promise<void>
+}
+
+export const SyncFailureBanner: React.FC<SyncFailureBannerProps> = ({ failedCount, onRetry }) => {
+  const [isRetrying, setIsRetrying] = useState(false)
+
+  if (failedCount <= 0) return null
+
+  const handleRetry = async () => {
+    setIsRetrying(true)
+    try {
+      await onRetry()
+    } finally {
+      setIsRetrying(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200">
+      <div className="flex items-center gap-2 min-w-0">
+        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+        <span className="leading-snug">
+          {failedCount} registro{failedCount > 1 ? 's' : ''} não sincronizado{failedCount > 1 ? 's' : ''} após várias tentativas.
+        </span>
+      </div>
+      <button
+        onClick={handleRetry}
+        disabled={isRetrying}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-900/70 hover:bg-red-900 border border-red-700/60 rounded-lg font-semibold text-red-100 shrink-0 transition-colors disabled:opacity-60 cursor-pointer"
+      >
+        <RefreshCw className={`w-3.5 h-3.5 ${isRetrying ? 'animate-spin' : ''}`} />
+        Tentar Novamente
+      </button>
+    </div>
+  )
+}

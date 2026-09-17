@@ -5,7 +5,7 @@ export type PunchType =
   | 'SAIDA'
   | 'EXTRA'
 
-export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed'
+export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'paused_auth'
 
 export interface PunchCoordinates {
   latitude: number
@@ -16,6 +16,7 @@ export interface PunchCoordinates {
 export interface LocalPunchRecord {
   id: string // UUID v4 gerado no cliente
   userId: string
+  colaboradorId: string // FK para colaboradores.id — necessário para popular vw_afd_marcacoes
   punchType: PunchType
   clientTimestamp: string // ISO 8601 string
   performanceNow: number // Relógio monotônico do navegador
@@ -30,16 +31,25 @@ export interface LocalPunchRecord {
     teleportationSuspect?: boolean
     calculatedSpeedKmh?: number
     userAgent?: string
+    isManualOverride?: boolean
+    originalDeducedType?: PunchType
+    justification?: string
+    geoError?: string
+    isOutOfBounds?: boolean
+    distanceFromHqMeters?: number
   }
 }
 
 export interface EmployeeProfile {
-  id: string
+  id: string // auth.users.id — usado como time_entries.user_id (RLS: auth.uid() = user_id)
+  colaboradorId: string // colaboradores.id — usado como time_entries.colaborador_id (AFD)
   name: string
   role: string
   registrationNumber: string // Matrícula
   department: string
   company: string
+  email: string
+  isFirstLogin: boolean
 }
 
 export const PUNCH_TYPE_LABELS: Record<PunchType, string> = {

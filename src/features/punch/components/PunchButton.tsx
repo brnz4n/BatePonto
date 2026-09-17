@@ -21,12 +21,6 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
 }) => {
   return (
     <div className="relative flex flex-col items-center justify-center my-6">
-      {/* Halo pulsante ao redor do botão */}
-      <div className="absolute w-56 h-56 rounded-full bg-[#722F37]/30 blur-xl animate-pulse pointer-events-none" />
-
-      {/* Anel de onda pulsante */}
-      <div className="absolute w-52 h-52 rounded-full border border-[#722F37]/40 animate-pulse-ring pointer-events-none" />
-
       {/* Botão Gigante de Ação Única */}
       <button
         onClick={onClick}
@@ -44,9 +38,6 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
           cursor-pointer disabled:opacity-75 disabled:cursor-wait
         `}
       >
-        {/* Reflexo de vidro interno no topo */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-32 h-16 bg-white/10 rounded-full blur-[2px] pointer-events-none" />
-
         {isPunching ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-12 h-12 text-white animate-spin" />
