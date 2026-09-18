@@ -1,7 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getTodayPunches } from '../../sync/db/localDb'
+import { fetchRemotePunches, mergePunches } from '../../history/services/historyDataService'
 import type { LocalPunchRecord, PunchType } from '../types/punch.types'
 import { PUNCH_TYPE_LABELS } from '../types/punch.types'
+
+function todayRangeIso(): { startIso: string; endIso: string } {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  const end = new Date()
+  end.setHours(23, 59, 59, 999)
+  return { startIso: start.toISOString(), endIso: end.toISOString() }
+}
 
 export interface StateMachineResult {
   todayPunches: LocalPunchRecord[]
@@ -17,10 +26,21 @@ export function usePunchStateMachine(userId: string): StateMachineResult {
   const [todayPunches, setTodayPunches] = useState<LocalPunchRecord[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
+  // Mesmo princípio já aplicado no Histórico: o IndexedDB local só é garantido para o que
+  // ainda está pendente de sincronizar. Um ponto já sincronizado por OUTRA aba/sessão (ou
+  // que sobreviveu a uma limpeza de storage) só existe no Supabase — sem mesclar com o
+  // remoto aqui, o card "Registros do Dia" e o status (em jornada/fora de expediente)
+  // ficam divergentes do que o Histórico mostra para o mesmo dia.
   const refreshTodayPunches = useCallback(async () => {
     try {
-      const records = await getTodayPunches(userId)
-      setTodayPunches(records)
+      const { startIso, endIso } = todayRangeIso()
+      const localRecords = await getTodayPunches(userId)
+      try {
+        const remoteRecords = await fetchRemotePunches(userId, startIso, endIso)
+        setTodayPunches(mergePunches(remoteRecords, localRecords))
+      } catch {
+        setTodayPunches(localRecords)
+      }
     } finally {
       setIsLoading(false)
     }

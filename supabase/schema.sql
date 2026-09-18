@@ -80,9 +80,39 @@ create policy "colaborador ve seus proprios pontos"
   on public.time_entries for select to authenticated
   using (auth.uid() = user_id);
 
-create policy "colaborador insere seus proprios pontos"
+-- Além de auth.uid() = user_id, exige colaborador ATIVO — sem isso, alguém desligado pelo RH
+-- continua conseguindo bater ponto com o token de sessão antigo até ele expirar/renovar.
+create policy "colaborador ativo insere seus proprios pontos"
   on public.time_entries for insert to authenticated
-  with check (auth.uid() = user_id);
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.colaboradores c
+      where c.auth_user_id = auth.uid() and c.ativo = true
+    )
+  );
+
+-- ============================================================================
+-- 2.1) KILL SWITCH
+-- Flag global consultada pelo front-end antes de habilitar o botão de bater ponto.
+-- Alternar é tarefa de Admin (Dashboard/SQL Editor com service_role) — não há política de
+-- INSERT/UPDATE/DELETE para `authenticated`, só leitura.
+-- ============================================================================
+create table public.system_config (
+  id boolean primary key default true,
+  is_punch_enabled boolean not null default true,
+  maintenance_message text,
+  updated_at timestamptz not null default now(),
+  constraint system_config_singleton check (id)
+);
+
+alter table public.system_config enable row level security;
+
+create policy "colaborador autenticado le a config do sistema"
+  on public.system_config for select to authenticated
+  using (true);
+
+insert into public.system_config (id, is_punch_enabled) values (true, true);
 
 -- ============================================================================
 -- 3) VIEW DE APOIO PARA O EXPORT DO AFD

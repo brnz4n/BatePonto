@@ -8,16 +8,18 @@ import { DailyTimeline } from './DailyTimeline'
 import { PunchSuccessModal } from './PunchSuccessModal'
 import { SyncFailureBanner } from '../../sync/components/SyncFailureBanner'
 import { useGeolocation } from '../../../shared/hooks/useGeolocation'
+import { useSystemConfig } from '../../../shared/hooks/useSystemConfig'
 import { checkGeofence } from '../../../shared/utils/geofence'
 import { usePunchStateMachine } from '../hooks/usePunchStateMachine'
 import { usePunchAction } from '../hooks/usePunchAction'
 import type { LocalPunchRecord, PunchType } from '../types/punch.types'
 import type { AuthenticatedContext } from '../../../app/AuthenticatedLayout'
-import { ShieldCheck, UserCheck, AlertCircle } from 'lucide-react'
+import { ShieldCheck, UserCheck, AlertCircle, Wrench } from 'lucide-react'
 
 export function PunchHomeScreen() {
   const { profile, syncManager, notificationManager } = useOutletContext<AuthenticatedContext>()
   const { coords, getPosition } = useGeolocation()
+  const { isPunchEnabled, maintenanceMessage } = useSystemConfig()
 
   const [lastSuccessRecord, setLastSuccessRecord] = useState<LocalPunchRecord | null>(null)
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState<boolean>(false)
@@ -92,8 +94,23 @@ export function PunchHomeScreen() {
         </div>
       </div>
 
+      {/* Kill Switch: Admin pode desabilitar o botão de bater ponto sem novo deploy */}
+      {!isPunchEnabled && (
+        <div className="flex items-center gap-2 p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200">
+          <Wrench className="w-4 h-4 text-red-400 shrink-0" />
+          <span className="leading-snug">
+            {maintenanceMessage || 'Sistema em manutenção — o registro de ponto está temporariamente desabilitado.'}
+          </span>
+        </div>
+      )}
+
       {/* Alerta de registros que esgotaram as tentativas de sincronização */}
-      <SyncFailureBanner failedCount={syncManager.failedCount} onRetry={syncManager.retryFailed} />
+      <SyncFailureBanner
+        failedCount={syncManager.failedCount}
+        onRetry={syncManager.retryFailed}
+        isCircuitOpen={syncManager.isCircuitOpen}
+        circuitOpenUntil={syncManager.circuitOpenUntil}
+      />
 
       {/* Relógio Digital em Tempo Real */}
       <LiveClock hasGpsSignal={!!coords} accuracyMeters={coords?.accuracy} geofence={geofence} />
@@ -122,7 +139,8 @@ export function PunchHomeScreen() {
         sublabel={nextActionDesc}
         isPunching={isPunching}
         onClick={() => executePunch()}
-        onOpenOverrideModal={() => setIsOverrideModalOpen(true)}
+        onOpenOverrideModal={isPunchEnabled ? () => setIsOverrideModalOpen(true) : undefined}
+        disabled={!isPunchEnabled}
       />
 
       {/* Linha do Tempo dos Registros do Dia */}

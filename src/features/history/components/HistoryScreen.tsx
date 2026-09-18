@@ -33,6 +33,10 @@ export function HistoryScreen() {
 
   const { startIso, endIso } = useMemo(() => monthRange(year, month), [year, month])
 
+  // Exibição do mais recente para o mais antigo — a busca/merge continua em ordem
+  // cronológica (usada pelo export AFD), a inversão é só para a lista na tela.
+  const displayedPunches = useMemo(() => [...punches].reverse(), [punches])
+
   const loadPunches = useCallback(async () => {
     setIsLoading(true)
     setLoadNotice(null)
@@ -158,7 +162,7 @@ export function HistoryScreen() {
           </div>
         ) : (
           <div className="divide-y divide-slate-800/60">
-            {punches.map((punch) => {
+            {displayedPunches.map((punch) => {
               const date = new Date(punch.clientTimestamp)
               const dateFormatted = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
               const timeFormatted = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })

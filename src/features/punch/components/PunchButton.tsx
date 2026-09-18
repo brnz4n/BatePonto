@@ -9,6 +9,7 @@ interface PunchButtonProps {
   isPunching: boolean
   onClick: () => void
   onOpenOverrideModal?: () => void
+  disabled?: boolean
 }
 
 export const PunchButton: React.FC<PunchButtonProps> = ({
@@ -18,13 +19,14 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
   isPunching,
   onClick,
   onOpenOverrideModal,
+  disabled,
 }) => {
   return (
     <div className="relative flex flex-col items-center justify-center my-6">
       {/* Botão Gigante de Ação Única */}
       <button
         onClick={onClick}
-        disabled={isPunching}
+        disabled={isPunching || disabled}
         aria-label={label}
         className={`
           relative z-10 w-52 h-52 rounded-full
@@ -35,7 +37,7 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
           shadow-[0_12px_36px_rgba(114,47,55,0.45)]
           border-4 border-slate-900/50
           flex flex-col items-center justify-center p-4 text-center select-none
-          cursor-pointer disabled:opacity-75 disabled:cursor-wait
+          cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
         `}
       >
         {isPunching ? (

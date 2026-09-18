@@ -12,6 +12,71 @@ export interface SyncResult {
   failedCount: number
   authPausedCount: number
   errors: string[]
+  circuitOpen?: boolean
+}
+
+// ============================================================================
+// Circuit Breaker
+// Se o Supabase começar a devolver erro de servidor (5xx) ou a rede cair em
+// bloco, martelar a fila a cada 15s (useSyncManager) só afunda quem já está
+// no ar. Depois de N falhas de servidor seguidas o disjuntor "desarma" e
+// bloqueia novas tentativas por um cooldown — processSyncQueue retorna sem
+// nem tentar tocar a rede enquanto ele estiver aberto.
+// ============================================================================
+const CIRCUIT_FAILURE_THRESHOLD = 5
+const CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutos
+
+let consecutiveServerFailures = 0
+let circuitOpenUntil = 0
+
+function isCircuitOpen(): boolean {
+  return Date.now() < circuitOpenUntil
+}
+
+function recordServerFailure(): void {
+  consecutiveServerFailures += 1
+  if (consecutiveServerFailures >= CIRCUIT_FAILURE_THRESHOLD) {
+    circuitOpenUntil = Date.now() + CIRCUIT_COOLDOWN_MS
+  }
+}
+
+function recordServerSuccess(): void {
+  consecutiveServerFailures = 0
+  circuitOpenUntil = 0
+}
+
+/** Usado pela UI (banner de sincronização) para avisar o colaborador do cooldown. */
+export function getCircuitBreakerStatus(): { isOpen: boolean; openUntil: number | null } {
+  return { isOpen: isCircuitOpen(), openUntil: circuitOpenUntil || null }
+}
+
+/**
+ * Reconhece falhas "de servidor/rede" (transitórias, candidatas a abrir o disjuntor) —
+ * diferente de erro de auth (trata sessão) ou 4xx de validação (payload ruim, não é
+ * culpa do Supabase estar fora do ar e não deve contar para o disjuntor).
+ */
+function isServerOrNetworkError(error: any): boolean {
+  const status = error?.status ?? error?.originalError?.status
+  if (typeof status === 'number') return status >= 500
+  // Erros de fetch sem status (rede caiu, DNS, timeout) chegam sem `status`.
+  return status === undefined
+}
+
+// ============================================================================
+// Exponential Backoff com Jitter
+// Falha transitória de rede não deve reentrar no ritmo fixo de 15s do
+// useSyncManager — isso faz 100 celulares martelarem o banco juntos assim que
+// o Wi-Fi da empresa volta. Cada registro ganha um `nextRetryAt` crescente
+// (2s, 4s, 8s, 16s, 32s...) com jitter aleatório para espalhar as tentativas.
+// ============================================================================
+const BACKOFF_BASE_MS = 2000
+const BACKOFF_MAX_MS = 5 * 60 * 1000 // teto de 5 minutos entre tentativas
+const BACKOFF_JITTER_MS = 1000
+
+function computeNextRetryAt(retryCount: number): string {
+  const exponential = Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** retryCount)
+  const jitter = Math.random() * BACKOFF_JITTER_MS
+  return new Date(Date.now() + exponential + jitter).toISOString()
 }
 
 /**
@@ -46,15 +111,30 @@ export async function processSyncQueue(): Promise<SyncResult> {
     return { totalProcessed: 0, successCount: 0, failedCount: 0, authPausedCount: 0, errors: ['Dispositivo offline'] }
   }
 
+  if (isCircuitOpen()) {
+    return {
+      totalProcessed: 0,
+      successCount: 0,
+      failedCount: 0,
+      authPausedCount: 0,
+      errors: ['Disjuntor aberto — Supabase reportou falhas seguidas, pausando novas tentativas temporariamente'],
+      circuitOpen: true,
+    }
+  }
+
   isSyncInProgress = true
   const result: SyncResult = { totalProcessed: 0, successCount: 0, failedCount: 0, authPausedCount: 0, errors: [] }
   let authRequiredDispatched = false
 
   try {
-    const pendingPunches = await db.punches
+    const now = new Date().toISOString()
+    const allPending = await db.punches
       .where('syncStatus')
       .equals('pending')
       .sortBy('clientTimestamp')
+
+    // Ignora, por enquanto, registros ainda dentro da janela de backoff exponencial.
+    const pendingPunches = allPending.filter((p) => !p.nextRetryAt || p.nextRetryAt <= now)
 
     if (pendingPunches.length === 0) {
       return result
@@ -63,6 +143,12 @@ export async function processSyncQueue(): Promise<SyncResult> {
     result.totalProcessed = pendingPunches.length
 
     for (const record of pendingPunches) {
+      if (isCircuitOpen()) {
+        result.circuitOpen = true
+        result.errors.push('Disjuntor abriu no meio do lote — restante fica para a próxima janela')
+        break
+      }
+
       try {
         // Marca como sincronizando
         await db.punches.update(record.id, { syncStatus: 'syncing' })
@@ -106,6 +192,7 @@ export async function processSyncQueue(): Promise<SyncResult> {
             syncedAt: new Date().toISOString(),
           })
           result.successCount++
+          recordServerSuccess()
         }
       } catch (err: any) {
         if (isAuthError(err)) {
@@ -122,13 +209,24 @@ export async function processSyncQueue(): Promise<SyncResult> {
           break
         }
 
+        if (isServerOrNetworkError(err)) {
+          recordServerFailure()
+        }
+
         const nextRetry = (record.retryCount || 0) + 1
         await db.punches.update(record.id, {
           syncStatus: nextRetry >= 5 ? 'failed' : 'pending',
           retryCount: nextRetry,
+          nextRetryAt: nextRetry >= 5 ? undefined : computeNextRetryAt(nextRetry),
         })
         result.failedCount++
         result.errors.push(`Erro no registro ${record.id}: ${err?.message || 'Erro desconhecido'}`)
+
+        if (isCircuitOpen()) {
+          result.circuitOpen = true
+          result.errors.push('Disjuntor aberto após falhas seguidas de servidor — pausando novas tentativas por alguns minutos')
+          break
+        }
       }
     }
   } finally {

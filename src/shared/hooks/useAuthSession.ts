@@ -31,12 +31,13 @@ interface ColaboradorRow {
   empresa: string
   email: string
   is_first_login: boolean
+  ativo: boolean
 }
 
 async function fetchColaboradorProfile(authUserId: string): Promise<ColaboradorRow | null> {
   const { data, error } = await supabase
     .from('colaboradores')
-    .select('id, nome, matricula, cargo, departamento, empresa, email, is_first_login')
+    .select('id, nome, matricula, cargo, departamento, empresa, email, is_first_login, ativo')
     .eq('auth_user_id', authUserId)
     .maybeSingle()
 
@@ -79,6 +80,19 @@ export function useAuthSession() {
         setProfile(null)
         setAuthStatus('unauthenticated')
         setAuthError('Sua conta ainda não foi provisionada pelo RH. Contate o setor de Recursos Humanos.')
+        await supabase.auth.signOut()
+        return
+      }
+
+      // JWT ainda válido não significa colaborador ativo — RH pode ter desligado a pessoa e o
+      // token de sessão sobrevive até expirar/renovar sozinho. Sem esta checagem o app deixava
+      // logins e sincronizações passarem por até 1h (ou indefinidamente, com refresh automático)
+      // depois do desligamento. A garantia definitiva fica na RLS (colaborador precisa estar
+      // ativo para inserir/ler pontos); isto aqui só cobra a sessão de fora imediatamente.
+      if (!colaborador.ativo) {
+        setProfile(null)
+        setAuthStatus('unauthenticated')
+        setAuthError('Sua conta foi desativada. Contate o setor de Recursos Humanos.')
         await supabase.auth.signOut()
         return
       }

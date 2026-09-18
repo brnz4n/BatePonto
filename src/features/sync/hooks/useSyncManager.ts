@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { processSyncQueue } from '../services/syncQueueService'
+import { processSyncQueue, getCircuitBreakerStatus } from '../services/syncQueueService'
 import {
   getPendingPunchesCount,
   getFailedPunchesCount,
@@ -14,6 +14,7 @@ export function useSyncManager() {
   const [pausedAuthCount, setPausedAuthCount] = useState<number>(0)
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
+  const [circuitOpenUntil, setCircuitOpenUntil] = useState<number | null>(null)
 
   const refreshCounts = useCallback(async () => {
     try {
@@ -38,6 +39,7 @@ export function useSyncManager() {
       await processSyncQueue()
       await refreshCounts()
       setLastSyncTime(new Date())
+      setCircuitOpenUntil(getCircuitBreakerStatus().openUntil)
     } finally {
       setIsSyncing(false)
     }
@@ -86,6 +88,8 @@ export function useSyncManager() {
     pausedAuthCount,
     isSyncing,
     lastSyncTime,
+    isCircuitOpen: circuitOpenUntil != null && circuitOpenUntil > Date.now(),
+    circuitOpenUntil,
     triggerSync,
     retryFailed,
     refreshPendingCount: refreshCounts,

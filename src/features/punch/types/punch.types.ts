@@ -25,6 +25,7 @@ export interface LocalPunchRecord {
   syncStatus: SyncStatus
   retryCount: number
   syncedAt?: string
+  nextRetryAt?: string // ISO 8601 — backoff exponencial com jitter, ignorado até esse instante
   auditMetadata?: {
     isMockSuspect?: boolean
     mockReason?: string

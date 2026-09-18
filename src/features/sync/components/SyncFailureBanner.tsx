@@ -1,13 +1,33 @@
 import React, { useState } from 'react'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle, RefreshCw, ShieldOff } from 'lucide-react'
 
 interface SyncFailureBannerProps {
   failedCount: number
   onRetry: () => Promise<void>
+  isCircuitOpen?: boolean
+  circuitOpenUntil?: number | null
 }
 
-export const SyncFailureBanner: React.FC<SyncFailureBannerProps> = ({ failedCount, onRetry }) => {
+export const SyncFailureBanner: React.FC<SyncFailureBannerProps> = ({
+  failedCount,
+  onRetry,
+  isCircuitOpen,
+  circuitOpenUntil,
+}) => {
   const [isRetrying, setIsRetrying] = useState(false)
+
+  if (isCircuitOpen) {
+    const minutesLeft = circuitOpenUntil ? Math.max(1, Math.ceil((circuitOpenUntil - Date.now()) / 60000)) : null
+    return (
+      <div className="flex items-center gap-2 p-3 bg-amber-950/60 border border-amber-800/80 rounded-xl text-xs text-amber-200">
+        <ShieldOff className="w-4 h-4 text-amber-400 shrink-0" />
+        <span className="leading-snug">
+          Sincronização pausada temporariamente após falhas seguidas do servidor
+          {minutesLeft ? ` — nova tentativa em até ${minutesLeft} min` : ''}. Seus pontos continuam salvos neste dispositivo.
+        </span>
+      </div>
+    )
+  }
 
   if (failedCount <= 0) return null
 
