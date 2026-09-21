@@ -8,6 +8,7 @@ export interface GeolocationState {
   mockReason?: string
   error: string | null
   isLoading: boolean
+  fetchedAt: number | null
 }
 
 export function useGeolocation() {
@@ -16,6 +17,7 @@ export function useGeolocation() {
     isMockSuspect: false,
     error: null,
     isLoading: false,
+    fetchedAt: null,
   })
 
   const getPosition = useCallback(async (): Promise<{
@@ -28,7 +30,7 @@ export function useGeolocation() {
 
     if (!navigator.geolocation) {
       const errorMsg = 'Geolocalização não suportada neste navegador'
-      setState({ coords: null, isMockSuspect: false, error: errorMsg, isLoading: false })
+      setState({ coords: null, isMockSuspect: false, error: errorMsg, isLoading: false, fetchedAt: null })
       return { isMockSuspect: false, error: errorMsg }
     }
 
@@ -50,6 +52,7 @@ export function useGeolocation() {
             mockReason: mockCheck.reason,
             error: null,
             isLoading: false,
+            fetchedAt: Date.now(),
           })
 
           resolve({
@@ -73,6 +76,7 @@ export function useGeolocation() {
             isMockSuspect: false,
             error: errorMsg,
             isLoading: false,
+            fetchedAt: null,
           })
 
           resolve({

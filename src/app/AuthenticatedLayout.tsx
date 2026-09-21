@@ -6,6 +6,7 @@ import { InstallGuidanceModal } from '../features/install/components/InstallGuid
 import { useSyncManager } from '../features/sync/hooks/useSyncManager'
 import { usePWAInstallPrompt } from '../features/install/hooks/usePWAInstallPrompt'
 import { useNotificationManager } from '../features/notifications/hooks/useNotificationManager'
+import { useSmartPunchReminder } from '../features/notifications/hooks/useSmartPunchReminder'
 import type { EmployeeProfile } from '../features/punch/types/punch.types'
 
 export interface AuthenticatedContext {
@@ -22,6 +23,7 @@ interface AuthenticatedLayoutProps {
 export function AuthenticatedLayout({ profile, onSignOut }: AuthenticatedLayoutProps) {
   const syncManager = useSyncManager()
   const notificationManager = useNotificationManager()
+  useSmartPunchReminder(profile.id, notificationManager.isGranted)
   const { isStandalone } = usePWAInstallPrompt()
   const [isInstallModalForced, setIsInstallModalForced] = useState(false)
 

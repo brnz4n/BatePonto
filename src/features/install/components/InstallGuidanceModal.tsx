@@ -26,8 +26,9 @@ export const InstallGuidanceModal: React.FC<InstallGuidanceModalProps> = ({
       return
     }
 
-    // Verifica se já foi dispensado nesta sessão
-    const dismissed = sessionStorage.getItem('atlas_install_prompt_dismissed')
+    // Aparece uma única vez na vida do colaborador neste aparelho — não a cada aba/sessão nova.
+    // Quem quiser instalar depois tem o ícone dedicado no Header, que sempre reabre via forceOpen.
+    const dismissed = localStorage.getItem('atlas_install_prompt_dismissed')
     if (!dismissed) {
       // Abre sutilmente após 1.5s de carga
       const timer = setTimeout(() => setIsOpen(true), 1500)
@@ -36,7 +37,7 @@ export const InstallGuidanceModal: React.FC<InstallGuidanceModalProps> = ({
   }, [isStandalone, forceOpen])
 
   const handleClose = () => {
-    sessionStorage.setItem('atlas_install_prompt_dismissed', 'true')
+    localStorage.setItem('atlas_install_prompt_dismissed', 'true')
     setIsOpen(false)
     if (onClose) onClose()
   }

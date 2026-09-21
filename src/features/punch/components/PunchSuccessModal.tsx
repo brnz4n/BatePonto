@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { CheckCircle2, ShieldCheck, MapPin, X } from 'lucide-react'
 import type { LocalPunchRecord } from '../types/punch.types'
 import { PUNCH_TYPE_SHORT } from '../types/punch.types'
@@ -8,25 +8,15 @@ interface PunchSuccessModalProps {
   onClose: () => void
 }
 
-export const PunchSuccessModal: React.FC<PunchSuccessModalProps> = ({ record, onClose }) => {
-  const [countdown, setCountdown] = useState<number>(4)
+// Colaborador bate ponto na correria (catraca, ponto de ônibus) — 4s de espera parece uma
+// eternidade. 2s é o tempo pra ver o check verde e o horário sem travar o fluxo dele.
+const AUTO_CLOSE_MS = 2000
 
+export const PunchSuccessModal: React.FC<PunchSuccessModalProps> = ({ record, onClose }) => {
   useEffect(() => {
     if (!record) return
-    setCountdown(4)
-
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          onClose()
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
+    const timer = setTimeout(onClose, AUTO_CLOSE_MS)
+    return () => clearTimeout(timer)
   }, [record, onClose])
 
   if (!record) return null
@@ -44,8 +34,14 @@ export const PunchSuccessModal: React.FC<PunchSuccessModalProps> = ({ record, on
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-sm bg-slate-900 border border-slate-750 rounded-3xl p-6 shadow-2xl text-center overflow-hidden">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-sm bg-slate-900 border border-slate-750 rounded-3xl p-6 shadow-2xl text-center overflow-hidden"
+      >
         {/* Luz ambiente esmeralda de sucesso */}
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-32 bg-emerald-500/20 blur-3xl rounded-full pointer-events-none" />
 
@@ -104,7 +100,7 @@ export const PunchSuccessModal: React.FC<PunchSuccessModalProps> = ({ record, on
           onClick={onClose}
           className="w-full py-3 bg-[#722F37] hover:bg-[#8C3843] text-white font-semibold rounded-xl text-sm transition-all shadow-md active:scale-98"
         >
-          OK ({countdown}s)
+          OK
         </button>
       </div>
     </div>

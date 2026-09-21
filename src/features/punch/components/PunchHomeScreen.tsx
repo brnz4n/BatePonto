@@ -18,7 +18,8 @@ import { ShieldCheck, UserCheck, AlertCircle, Wrench } from 'lucide-react'
 
 export function PunchHomeScreen() {
   const { profile, syncManager, notificationManager } = useOutletContext<AuthenticatedContext>()
-  const { coords, getPosition } = useGeolocation()
+  const geolocation = useGeolocation()
+  const { coords, getPosition } = geolocation
   const { isPunchEnabled, maintenanceMessage } = useSystemConfig()
 
   const [lastSuccessRecord, setLastSuccessRecord] = useState<LocalPunchRecord | null>(null)
@@ -39,13 +40,12 @@ export function PunchHomeScreen() {
   const {
     todayPunches,
     nextPunchType,
-    nextActionLabel,
     nextActionDesc,
     currentWorkStatus,
     refreshTodayPunches,
   } = usePunchStateMachine(profile.id)
 
-  const { executePunch, isPunching, errorMessage } = usePunchAction({
+  const { executePunch, isPunching, isCoolingDown, errorMessage } = usePunchAction({
     userId: profile.id,
     colaboradorId: profile.colaboradorId,
     nextPunchType,
@@ -53,8 +53,10 @@ export function PunchHomeScreen() {
     onSuccess: (record: LocalPunchRecord) => setLastSuccessRecord(record),
     triggerSync: syncManager.triggerSync,
     refreshTodayPunches,
+    geolocation,
     getPosition,
     onLunchRegistered: (timestamp: string) => notificationManager.scheduleLunchReminder(timestamp),
+    onCancelLunchReminder: notificationManager.cancelLunchReminder,
   })
 
   const lastLunchPunch =
@@ -135,12 +137,11 @@ export function PunchHomeScreen() {
       {/* Botão Gigante de Ação Única (Vinho Bordô) com opção de override manual */}
       <PunchButton
         punchType={nextPunchType}
-        label={nextActionLabel}
         sublabel={nextActionDesc}
         isPunching={isPunching}
         onClick={() => executePunch()}
         onOpenOverrideModal={isPunchEnabled ? () => setIsOverrideModalOpen(true) : undefined}
-        disabled={!isPunchEnabled}
+        disabled={!isPunchEnabled || isCoolingDown}
       />
 
       {/* Linha do Tempo dos Registros do Dia */}

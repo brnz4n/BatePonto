@@ -2,9 +2,12 @@ import React from 'react'
 import { Fingerprint, Loader2, HelpCircle } from 'lucide-react'
 import type { PunchType } from '../types/punch.types'
 
+// Marcação Sequencial Neutra: o rótulo principal do botão nunca varia por tipo de batida —
+// o "sublabel" (posição sequencial da jornada) é quem carrega o contexto.
+const BUTTON_LABEL = 'Registrar Ponto'
+
 interface PunchButtonProps {
   punchType: PunchType
-  label: string
   sublabel: string
   isPunching: boolean
   onClick: () => void
@@ -14,7 +17,6 @@ interface PunchButtonProps {
 
 export const PunchButton: React.FC<PunchButtonProps> = ({
   punchType: _punchType,
-  label,
   sublabel,
   isPunching,
   onClick,
@@ -27,7 +29,7 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
       <button
         onClick={onClick}
         disabled={isPunching || disabled}
-        aria-label={label}
+        aria-label={BUTTON_LABEL}
         className={`
           relative z-10 w-52 h-52 rounded-full
           bg-gradient-to-br from-[#8C3843] via-[#722F37] to-[#4A151B]
@@ -54,7 +56,7 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
             </div>
 
             <span className="text-white font-bold text-lg leading-tight drop-shadow-md px-2 max-w-[170px]">
-              {label}
+              {BUTTON_LABEL}
             </span>
 
             <span className="text-slate-200/80 text-[10px] font-medium tracking-wide uppercase mt-1">
