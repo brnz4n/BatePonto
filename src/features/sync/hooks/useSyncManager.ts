@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { processSyncQueue, getCircuitBreakerStatus } from '../services/syncQueueService'
+import { processSyncQueue, getCircuitBreakerStatus, resetCircuitBreaker } from '../services/syncQueueService'
 import {
   getPendingPunchesCount,
   getFailedPunchesCount,
@@ -31,8 +31,11 @@ export function useSyncManager() {
     }
   }, [])
 
-  const triggerSync = useCallback(async () => {
+  const triggerSync = useCallback(async (forceResetCircuit = false) => {
     if (!navigator.onLine) return
+    if (forceResetCircuit) {
+      resetCircuitBreaker()
+    }
     setIsSyncing(true)
 
     try {
@@ -46,9 +49,10 @@ export function useSyncManager() {
   }, [refreshCounts])
 
   const retryFailed = useCallback(async () => {
+    resetCircuitBreaker()
     await retryFailedPunches()
     await refreshCounts()
-    await triggerSync()
+    await triggerSync(true)
   }, [refreshCounts, triggerSync])
 
   useEffect(() => {
@@ -56,6 +60,10 @@ export function useSyncManager() {
 
     const handleOnline = () => {
       setIsOnline(true)
+      // A rede voltou de verdade — o disjuntor pode ter sido armado durante a queda, mas o
+      // motivo dele (falha de rede) acabou de ser resolvido. Sem isso, o colaborador ficaria
+      // até 5 minutos sem sincronizar automaticamente mesmo com o Wi-Fi/4G já de volta.
+      resetCircuitBreaker()
       triggerSync()
     }
 

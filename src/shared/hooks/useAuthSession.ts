@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, isDemoMode } from '../lib/supabaseClient'
 import { AUTH_REQUIRED_EVENT, resumePausedAuthQueue } from '../../features/sync/services/syncQueueService'
+import { saveCachedProfile, getCachedProfile, clearCachedProfile } from '../../features/sync/db/localDb'
 import type { EmployeeProfile } from '../../features/punch/types/punch.types'
 
 export type AuthStatus =
@@ -34,15 +35,35 @@ interface ColaboradorRow {
   ativo: boolean
 }
 
-async function fetchColaboradorProfile(authUserId: string): Promise<ColaboradorRow | null> {
-  const { data, error } = await supabase
-    .from('colaboradores')
-    .select('id, nome, matricula, cargo, departamento, empresa, email, is_first_login, ativo')
-    .eq('auth_user_id', authUserId)
-    .maybeSingle()
+type FetchProfileResult =
+  | { type: 'success'; data: ColaboradorRow }
+  | { type: 'not_found' }
+  | { type: 'network_error'; error: any }
 
-  if (error || !data) return null
-  return data as ColaboradorRow
+async function fetchColaboradorProfile(authUserId: string): Promise<FetchProfileResult> {
+  if (!navigator.onLine) {
+    return { type: 'network_error', error: new Error('Dispositivo offline') }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('colaboradores')
+      .select('id, nome, matricula, cargo, departamento, empresa, email, is_first_login, ativo')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle()
+
+    if (error) {
+      return { type: 'network_error', error }
+    }
+
+    if (!data) {
+      return { type: 'not_found' }
+    }
+
+    return { type: 'success', data: data as ColaboradorRow }
+  } catch (err: any) {
+    return { type: 'network_error', error: err }
+  }
 }
 
 function toEmployeeProfile(authUserId: string, row: ColaboradorRow): EmployeeProfile {
@@ -73,33 +94,55 @@ export function useAuthSession() {
     isLoadingProfileRef.current = true
 
     try {
-      const colaborador = await fetchColaboradorProfile(authUserId)
+      const result = await fetchColaboradorProfile(authUserId)
 
-      if (!colaborador) {
-        // Sessão válida no Supabase Auth, mas sem conta provisionada pelo RH em `colaboradores`.
+      if (result.type === 'success') {
+        const colaborador = result.data
+
+        if (!colaborador.ativo) {
+          await clearCachedProfile()
+          setProfile(null)
+          setAuthStatus('unauthenticated')
+          setAuthError('Sua conta foi desativada. Contate o setor de Recursos Humanos.')
+          await supabase.auth.signOut()
+          return
+        }
+
+        const employeeProfile = toEmployeeProfile(authUserId, colaborador)
+        await saveCachedProfile(employeeProfile)
+        setProfile(employeeProfile)
+        setAuthStatus(colaborador.is_first_login ? 'first-login-required' : 'authenticated')
+        setAuthError(null)
+        return
+      }
+
+      if (result.type === 'network_error') {
+        // Falha de rede ou dispositivo offline (ex: acordou celular sem sinal imediato):
+        // Resgata o perfil seguro do IndexedDB (Dexie) e mantém o colaborador autenticado.
+        const cached = await getCachedProfile(authUserId)
+        if (cached) {
+          setProfile(cached)
+          setAuthStatus(cached.isFirstLogin ? 'first-login-required' : 'authenticated')
+          setAuthError(null)
+          return
+        }
+
+        // Se não há cache (ex: primeiro acesso sem internet), aí sim pede login
+        setProfile(null)
+        setAuthStatus('unauthenticated')
+        setAuthError('Sem conexão com a internet para carregar seu perfil. Conecte-se e tente novamente.')
+        return
+      }
+
+      if (result.type === 'not_found') {
+        // Servidor confirmou que o usuário não existe no banco do RH
+        await clearCachedProfile()
         setProfile(null)
         setAuthStatus('unauthenticated')
         setAuthError('Sua conta ainda não foi provisionada pelo RH. Contate o setor de Recursos Humanos.')
         await supabase.auth.signOut()
         return
       }
-
-      // JWT ainda válido não significa colaborador ativo — RH pode ter desligado a pessoa e o
-      // token de sessão sobrevive até expirar/renovar sozinho. Sem esta checagem o app deixava
-      // logins e sincronizações passarem por até 1h (ou indefinidamente, com refresh automático)
-      // depois do desligamento. A garantia definitiva fica na RLS (colaborador precisa estar
-      // ativo para inserir/ler pontos); isto aqui só cobra a sessão de fora imediatamente.
-      if (!colaborador.ativo) {
-        setProfile(null)
-        setAuthStatus('unauthenticated')
-        setAuthError('Sua conta foi desativada. Contate o setor de Recursos Humanos.')
-        await supabase.auth.signOut()
-        return
-      }
-
-      setProfile(toEmployeeProfile(authUserId, colaborador))
-      setAuthStatus(colaborador.is_first_login ? 'first-login-required' : 'authenticated')
-      setAuthError(null)
     } finally {
       isLoadingProfileRef.current = false
     }
@@ -119,6 +162,7 @@ export function useAuthSession() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
+        clearCachedProfile().catch(() => {})
         setProfile(null)
         setAuthStatus('unauthenticated')
         return
@@ -146,7 +190,27 @@ export function useAuthSession() {
     if (isDemoMode) return
 
     const handleAuthRequired = async () => {
+      // Se estiver offline, NÃO desloga! A fila está apenas pausada aguardando rede.
+      if (!navigator.onLine) {
+        return
+      }
+
+      // Tenta renovar o token silenciosamente antes de deslogar
+      try {
+        const { data, error } = await supabase.auth.refreshSession()
+        if (!error && data?.session) {
+          // Sessão renovada com sucesso! Reabre a fila de sincronização
+          await resumePausedAuthQueue()
+          return
+        }
+      } catch {
+        // Falha transitória de rede durante o refresh não deve expulsar o usuário
+        return
+      }
+
+      // Apenas se o refresh for rejeitado de forma definitiva pelo servidor
       setSessionExpiredNotice('Sua sessão expirou. Faça login novamente para continuar sincronizando seus pontos.')
+      await clearCachedProfile()
       await supabase.auth.signOut()
     }
 
@@ -166,7 +230,10 @@ export function useAuthSession() {
   }, [])
 
   const signOut = useCallback(async () => {
+    await clearCachedProfile()
     await supabase.auth.signOut()
+    setProfile(null)
+    setAuthStatus('unauthenticated')
   }, [])
 
   const sendPasswordReset = useCallback(async (email: string) => {

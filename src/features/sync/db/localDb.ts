@@ -28,19 +28,6 @@ export async function getPunchesInRange(userId: string, startIso: string, endIso
 }
 
 /**
- * Retorna os pontos batidos no dia atual (baseado na data local YYYY-MM-DD)
- */
-export async function getTodayPunches(userId: string): Promise<LocalPunchRecord[]> {
-  const startOfDay = new Date()
-  startOfDay.setHours(0, 0, 0, 0)
-
-  const endOfDay = new Date()
-  endOfDay.setHours(23, 59, 59, 999)
-
-  return getPunchesInRange(userId, startOfDay.toISOString(), endOfDay.toISOString())
-}
-
-/**
  * Retorna a contagem de pontos pendentes de sincronização
  */
 export async function getPendingPunchesCount(): Promise<number> {
@@ -71,4 +58,25 @@ export async function retryFailedPunches(): Promise<void> {
   await db.punches.bulkUpdate(
     failedPunches.map((p) => ({ key: p.id, changes: { syncStatus: 'pending' as const, retryCount: 0 } }))
   )
+}
+
+/**
+ * Salva o perfil do colaborador no IndexedDB para persistência offline
+ */
+export async function saveCachedProfile(profile: EmployeeProfile): Promise<void> {
+  await db.cachedProfile.put(profile)
+}
+
+/**
+ * Resgata o perfil do colaborador a partir do IndexedDB
+ */
+export async function getCachedProfile(userId: string): Promise<EmployeeProfile | undefined> {
+  return await db.cachedProfile.get(userId)
+}
+
+/**
+ * Remove o perfil em cache ao realizar logout
+ */
+export async function clearCachedProfile(): Promise<void> {
+  await db.cachedProfile.clear()
 }

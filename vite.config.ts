@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['pwa-icon.svg', 'favicon.svg'],
+      includeAssets: ['logo-semfundo.png', 'pwa-192x192.png', 'pwa-512x512.png', 'apple-touch-icon.png', 'favicon.svg'],
       manifest: {
         name: 'Atlas Ponto — RFeitosa Group',
         short_name: 'Atlas Ponto',
@@ -20,10 +20,20 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/pwa-icon.svg',
-            sizes: '192x192 512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: '/logo-semfundo.png',
+            sizes: '1254x1254',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       },

@@ -22,7 +22,7 @@ export function useNotificationManager() {
       if (result === 'granted') {
         new Notification('Atlas Ponto — Notificações Ativadas', {
           body: 'Você receberá lembretes inteligentes para registrar o almoço e a saída.',
-          icon: '/pwa-icon.svg',
+          icon: '/pwa-192x192.png',
         })
         return true
       }
@@ -49,7 +49,7 @@ export function useNotificationManager() {
         if (Notification.permission === 'granted') {
           new Notification('Intervalo Quase Encerrado!', {
             body: 'Faltam 10 minutos para completar 1 hora de almoço. Prepare-se para bater o retorno.',
-            icon: '/pwa-icon.svg',
+            icon: '/pwa-192x192.png',
           })
         }
       }, delay50)
@@ -61,7 +61,7 @@ export function useNotificationManager() {
         if (Notification.permission === 'granted') {
           new Notification('Fim do Intervalo de Almoço', {
             body: 'Seu intervalo legal de 1h foi cumprido. Abra o Atlas Ponto para registrar o retorno!',
-            icon: '/pwa-icon.svg',
+            icon: '/pwa-192x192.png',
           })
         }
       }, delay60)

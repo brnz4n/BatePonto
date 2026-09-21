@@ -12,7 +12,7 @@ export const DailyTimeline: React.FC<DailyTimelineProps> = ({ punches }) => {
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/60">
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-slate-400" />
-          <h2 className="text-sm font-semibold text-slate-200">Registros do Dia</h2>
+          <h2 className="text-sm font-semibold text-slate-200">Registros da Jornada</h2>
         </div>
         <span className="text-xs font-mono text-slate-400 font-medium">
           {punches.length} {punches.length === 1 ? 'registro' : 'registros'}
@@ -21,17 +21,29 @@ export const DailyTimeline: React.FC<DailyTimelineProps> = ({ punches }) => {
 
       {punches.length === 0 ? (
         <div className="text-center py-6 text-slate-500 text-xs">
-          <p>Nenhuma batida registrada hoje.</p>
+          <p>Nenhuma batida registrada na jornada atual.</p>
           <p className="mt-1 text-[11px] text-slate-600">Sua linha do tempo aparecerá aqui conforme você bater o ponto.</p>
         </div>
       ) : (
         <div className="space-y-2.5">
           {punches.map((punch, index) => {
-            const timeFormatted = new Date(punch.clientTimestamp).toLocaleTimeString('pt-BR', {
+            const punchDate = new Date(punch.clientTimestamp)
+            const timeFormatted = punchDate.toLocaleTimeString('pt-BR', {
               hour: '2-digit',
               minute: '2-digit',
               second: '2-digit',
             })
+
+            // Turno noturno atravessa a meia-noite: sem essa marcação, uma ENTRADA de "ontem"
+            // às 22h e uma SAIDA de "hoje" às 06h pareceriam do mesmo dia na lista.
+            const yesterday = new Date()
+            yesterday.setDate(yesterday.getDate() - 1)
+            const dateLabel =
+              punchDate.toDateString() === yesterday.toDateString()
+                ? 'Ontem'
+                : punchDate.toDateString() !== new Date().toDateString()
+                  ? punchDate.toLocaleDateString('pt-BR')
+                  : null
 
             const isSynced = punch.syncStatus === 'synced'
             const hasMockAlert = punch.auditMetadata?.isMockSuspect || punch.auditMetadata?.teleportationSuspect
@@ -49,7 +61,10 @@ export const DailyTimeline: React.FC<DailyTimelineProps> = ({ punches }) => {
                     <span className="text-xs font-semibold text-slate-200 block">
                       {PUNCH_TYPE_SHORT[punch.punchType] || punch.punchType}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">{timeFormatted}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {timeFormatted}
+                      {dateLabel && <span className="text-slate-500"> · {dateLabel}</span>}
+                    </span>
                   </div>
                 </div>
 

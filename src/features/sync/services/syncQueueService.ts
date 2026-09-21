@@ -24,7 +24,7 @@ export interface SyncResult {
 // nem tentar tocar a rede enquanto ele estiver aberto.
 // ============================================================================
 const CIRCUIT_FAILURE_THRESHOLD = 5
-const CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutos
+const CIRCUIT_COOLDOWN_MS = 90 * 1000 // 90 segundos — suficiente pro servidor respirar sem deixar o colaborador esperando
 
 let consecutiveServerFailures = 0
 let circuitOpenUntil = 0
@@ -48,6 +48,14 @@ function recordServerSuccess(): void {
 /** Usado pela UI (banner de sincronização) para avisar o colaborador do cooldown. */
 export function getCircuitBreakerStatus(): { isOpen: boolean; openUntil: number | null } {
   return { isOpen: isCircuitOpen(), openUntil: circuitOpenUntil || null }
+}
+
+/**
+ * Reseta o disjuntor manualmente para permitir novas tentativas imediatas
+ */
+export function resetCircuitBreaker(): void {
+  consecutiveServerFailures = 0
+  circuitOpenUntil = 0
 }
 
 /**
