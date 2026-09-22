@@ -2,11 +2,14 @@ import { useState, useCallback } from 'react'
 import { evaluateMockRisk } from '../utils/antiFraud'
 import type { PunchCoordinates } from '../../features/punch/types/punch.types'
 
+export type GeolocationErrorType = 'PERMISSION_DENIED' | 'POSITION_UNAVAILABLE' | 'TIMEOUT' | 'NOT_SUPPORTED'
+
 export interface GeolocationState {
   coords: PunchCoordinates | null
   isMockSuspect: boolean
   mockReason?: string
   error: string | null
+  errorType: GeolocationErrorType | null
   isLoading: boolean
   fetchedAt: number | null
 }
@@ -16,6 +19,7 @@ export function useGeolocation() {
     coords: null,
     isMockSuspect: false,
     error: null,
+    errorType: null,
     isLoading: false,
     fetchedAt: null,
   })
@@ -26,11 +30,18 @@ export function useGeolocation() {
     mockReason?: string
     error?: string
   }> => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }))
+    setState((prev) => ({ ...prev, isLoading: true, error: null, errorType: null }))
 
     if (!navigator.geolocation) {
       const errorMsg = 'Geolocalização não suportada neste navegador'
-      setState({ coords: null, isMockSuspect: false, error: errorMsg, isLoading: false, fetchedAt: null })
+      setState({
+        coords: null,
+        isMockSuspect: false,
+        error: errorMsg,
+        errorType: 'NOT_SUPPORTED',
+        isLoading: false,
+        fetchedAt: null,
+      })
       return { isMockSuspect: false, error: errorMsg }
     }
 
@@ -51,6 +62,7 @@ export function useGeolocation() {
             isMockSuspect: mockCheck.isMockSuspect,
             mockReason: mockCheck.reason,
             error: null,
+            errorType: null,
             isLoading: false,
             fetchedAt: Date.now(),
           })
@@ -63,18 +75,23 @@ export function useGeolocation() {
         },
         (error) => {
           let errorMsg = 'Não foi possível obter a localização'
+          let errorType: GeolocationErrorType = 'POSITION_UNAVAILABLE'
           if (error.code === error.PERMISSION_DENIED) {
             errorMsg = 'Permissão de localização negada pelo usuário'
+            errorType = 'PERMISSION_DENIED'
           } else if (error.code === error.POSITION_UNAVAILABLE) {
             errorMsg = 'Sinal de GPS indisponível no momento'
+            errorType = 'POSITION_UNAVAILABLE'
           } else if (error.code === error.TIMEOUT) {
             errorMsg = 'Tempo esgotado ao buscar sinal de satélite'
+            errorType = 'TIMEOUT'
           }
 
           setState({
             coords: null,
             isMockSuspect: false,
             error: errorMsg,
+            errorType,
             isLoading: false,
             fetchedAt: null,
           })

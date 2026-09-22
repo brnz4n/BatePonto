@@ -1,10 +1,11 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, History } from 'lucide-react'
+import { Home, History, UserCircle2 } from 'lucide-react'
 
 const TABS = [
   { to: '/', label: 'Início', icon: Home, end: true },
   { to: '/historico', label: 'Histórico', icon: History, end: false },
+  { to: '/perfil', label: 'Perfil', icon: UserCircle2, end: false },
 ]
 
 export const BottomTabBar: React.FC = () => {

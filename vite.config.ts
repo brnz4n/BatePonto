@@ -35,6 +35,17 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any'
           }
+        ],
+        // Pressionar-e-segurar o ícone na tela inicial (Android/iOS 16.4+) já leva direto para o
+        // registro de ponto — a rota "/" é a própria PunchHomeScreen, sem tela intermediária.
+        shortcuts: [
+          {
+            name: 'Bater Ponto Agora',
+            short_name: 'Bater Ponto',
+            description: 'Abre o Atlas Ponto direto na tela de registro de ponto',
+            url: '/',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
+          }
         ]
       },
       workbox: {

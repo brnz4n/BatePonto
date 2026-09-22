@@ -26,6 +26,9 @@ export interface LocalPunchRecord {
   retryCount: number
   syncedAt?: string
   nextRetryAt?: string // ISO 8601 — backoff exponencial com jitter, ignorado até esse instante
+  // Só existe depois de sincronizado (identity column no Postgres) — vem preenchido quando o
+  // registro é lido de volta do Supabase (historyDataService/afdExportService).
+  nsr?: number
   auditMetadata?: {
     isMockSuspect?: boolean
     mockReason?: string
@@ -35,9 +38,15 @@ export interface LocalPunchRecord {
     isManualOverride?: boolean
     originalDeducedType?: PunchType
     justification?: string
+    isRetroactive?: boolean
     geoError?: string
     isOutOfBounds?: boolean
     distanceFromHqMeters?: number
+    blockchain?: {
+      hash: string
+      previousHash: string
+      sequence: number
+    }
   }
 }
 
@@ -51,6 +60,7 @@ export interface EmployeeProfile {
   company: string
   email: string
   isFirstLogin: boolean
+  cpf?: string
 }
 
 export const PUNCH_TYPE_LABELS: Record<PunchType, string> = {

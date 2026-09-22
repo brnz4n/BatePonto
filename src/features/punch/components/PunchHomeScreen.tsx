@@ -3,7 +3,6 @@ import { useOutletContext } from 'react-router-dom'
 import { LiveClock } from './LiveClock'
 import { PunchButton } from './PunchButton'
 import { LunchBreakTimer } from './LunchBreakTimer'
-import { ManualOverrideModal } from './ManualOverrideModal'
 import { DailyTimeline } from './DailyTimeline'
 import { PunchSuccessModal } from './PunchSuccessModal'
 import { SyncFailureBanner } from '../../sync/components/SyncFailureBanner'
@@ -12,7 +11,7 @@ import { useSystemConfig } from '../../../shared/hooks/useSystemConfig'
 import { checkGeofence } from '../../../shared/utils/geofence'
 import { usePunchStateMachine } from '../hooks/usePunchStateMachine'
 import { usePunchAction } from '../hooks/usePunchAction'
-import type { LocalPunchRecord, PunchType } from '../types/punch.types'
+import type { LocalPunchRecord } from '../types/punch.types'
 import type { AuthenticatedContext } from '../../../app/AuthenticatedLayout'
 import { ShieldCheck, UserCheck, AlertCircle, Wrench } from 'lucide-react'
 
@@ -23,7 +22,6 @@ export function PunchHomeScreen() {
   const { isPunchEnabled, maintenanceMessage } = useSystemConfig()
 
   const [lastSuccessRecord, setLastSuccessRecord] = useState<LocalPunchRecord | null>(null)
-  const [isOverrideModalOpen, setIsOverrideModalOpen] = useState<boolean>(false)
 
   // Busca a posição assim que a tela abre — sem isso o card só mostra "Aguardando GPS" até
   // o colaborador bater o primeiro ponto, o que parecia (e era) uma barreira de fricção zero.
@@ -115,7 +113,15 @@ export function PunchHomeScreen() {
       />
 
       {/* Relógio Digital em Tempo Real */}
-      <LiveClock hasGpsSignal={!!coords} accuracyMeters={coords?.accuracy} geofence={geofence} />
+      <LiveClock
+        hasGpsSignal={!!coords}
+        accuracyMeters={coords?.accuracy}
+        geofence={geofence}
+        isLoadingGps={geolocation.isLoading}
+        gpsError={geolocation.error}
+        gpsErrorType={geolocation.errorType}
+        onRetryGps={getPosition}
+      />
 
       {/* Cronômetro Dinâmico de Almoço (Exibido quando em intervalo) */}
       {currentWorkStatus === 'EM_INTERVALO' && (
@@ -134,13 +140,12 @@ export function PunchHomeScreen() {
         </div>
       )}
 
-      {/* Botão Gigante de Ação Única (Vinho Bordô) com opção de override manual */}
+      {/* Botão Gigante de Ação Única (Vinho Bordô) */}
       <PunchButton
         punchType={nextPunchType}
         sublabel={nextActionDesc}
         isPunching={isPunching}
         onClick={() => executePunch()}
-        onOpenOverrideModal={isPunchEnabled ? () => setIsOverrideModalOpen(true) : undefined}
         disabled={!isPunchEnabled || isCoolingDown}
       />
 
@@ -154,22 +159,12 @@ export function PunchHomeScreen() {
           <span>Sistema em conformidade com a Portaria 671/2021 MTE (REP-P)</span>
         </div>
         <div className="text-[10px] text-slate-600 mt-1">
-          Atlas Ponto • RFeitosa Group • v1.0.0
+          Atlas Ponto • RFeitosa Group • v1.0.1
         </div>
       </footer>
 
       {/* Modal de Confirmação com Checkmark Verde */}
       <PunchSuccessModal record={lastSuccessRecord} onClose={() => setLastSuccessRecord(null)} />
-
-      {/* Modal de Contingência Manual para Correção de Batida Esquecida */}
-      <ManualOverrideModal
-        isOpen={isOverrideModalOpen}
-        currentDeducedType={nextPunchType}
-        onClose={() => setIsOverrideModalOpen(false)}
-        onSelectOverride={(type: PunchType, justification?: string) => {
-          executePunch(type, justification)
-        }}
-      />
     </div>
   )
 }

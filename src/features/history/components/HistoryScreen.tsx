@@ -1,23 +1,19 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { FileDown, Loader2, AlertCircle, History as HistoryIcon, CheckCircle2, Clock, CloudOff } from 'lucide-react'
+import { FileDown, FileText, Loader2, AlertCircle, History as HistoryIcon, CheckCircle2, Clock, CloudOff } from 'lucide-react'
 import { getPunchesInRange } from '../../sync/db/localDb'
-import { fetchAfdRows, buildAfdFileContent, downloadTextFile } from '../services/afdExportService'
+import { fetchAfdRows, buildAfdFile, buildAfdFilename, downloadBinaryFile } from '../services/afdExportService'
 import { fetchRemotePunches, mergePunches } from '../services/historyDataService'
+import { generatePunchReceiptPdf } from '../../punch/services/punchReceiptService'
 import { PUNCH_TYPE_SHORT } from '../../punch/types/punch.types'
 import type { LocalPunchRecord } from '../../punch/types/punch.types'
 import type { AuthenticatedContext } from '../../../app/AuthenticatedLayout'
+import { monthRange } from '../../../shared/utils/dateRange'
 
 const MONTH_LABELS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
-
-function monthRange(year: number, month: number): { startIso: string; endIso: string } {
-  const start = new Date(year, month, 1, 0, 0, 0, 0)
-  const end = new Date(year, month + 1, 0, 23, 59, 59, 999)
-  return { startIso: start.toISOString(), endIso: end.toISOString() }
-}
 
 export function HistoryScreen() {
   const { profile, syncManager } = useOutletContext<AuthenticatedContext>()
@@ -30,6 +26,8 @@ export function HistoryScreen() {
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [loadNotice, setLoadNotice] = useState<string | null>(null)
+  const [receiptGeneratingId, setReceiptGeneratingId] = useState<string | null>(null)
+  const [receiptError, setReceiptError] = useState<string | null>(null)
 
   const { startIso, endIso } = useMemo(() => monthRange(year, month), [year, month])
 
@@ -69,12 +67,24 @@ export function HistoryScreen() {
         setExportError('Nenhuma marcação sincronizada nesse período ainda.')
         return
       }
-      const content = buildAfdFileContent(rows)
-      downloadTextFile(content, `afd_${profile.registrationNumber}_${year}-${String(month + 1).padStart(2, '0')}.txt`)
+      const fileBytes = await buildAfdFile(rows, startIso, endIso)
+      downloadBinaryFile(fileBytes, buildAfdFilename())
     } catch (err: any) {
       setExportError(err?.message || 'Não foi possível gerar o arquivo AFD.')
     } finally {
       setIsExporting(false)
+    }
+  }
+
+  const handleDownloadReceipt = async (punch: LocalPunchRecord) => {
+    setReceiptError(null)
+    setReceiptGeneratingId(punch.id)
+    try {
+      await generatePunchReceiptPdf(punch, profile)
+    } catch (err: any) {
+      setReceiptError(err?.message || 'Não foi possível gerar o comprovante em PDF.')
+    } finally {
+      setReceiptGeneratingId(null)
     }
   }
 
@@ -137,9 +147,16 @@ export function HistoryScreen() {
         )}
 
         <p className="mt-1.5 text-[10px] text-slate-500 leading-relaxed">
-          Arquivo ilustrativo para demonstração — não substitui um REP-P homologado para fiscalização.
+          Layout Tipo 1/7/9 (CRC-16, SHA-256, ISO-8859-1) da Portaria 671/2021 — valide as posições de campo com o RH antes de uso em fiscalização real.
         </p>
       </div>
+
+      {receiptError && (
+        <div className="p-2.5 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <span>{receiptError}</span>
+        </div>
+      )}
 
       {/* Lista de Registros do Período */}
       <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-800/80 overflow-hidden">
@@ -180,7 +197,7 @@ export function HistoryScreen() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     {isOutOfBounds && (
                       <span
                         title="Registrado fora do raio da sede"
@@ -194,6 +211,20 @@ export function HistoryScreen() {
                     ) : (
                       <span title="Aguardando sincronização"><Clock className="w-3.5 h-3.5 text-amber-400" /></span>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReceipt(punch)}
+                      disabled={receiptGeneratingId === punch.id}
+                      title="Baixar comprovante em PDF"
+                      aria-label="Baixar comprovante em PDF"
+                      className="p-1.5 text-slate-400 hover:text-[#c25b68] disabled:opacity-50 rounded-lg hover:bg-slate-800/80 transition-colors cursor-pointer"
+                    >
+                      {receiptGeneratingId === punch.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <FileText className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                   </div>
                 </div>
               )

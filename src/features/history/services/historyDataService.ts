@@ -3,6 +3,7 @@ import type { LocalPunchRecord, PunchType } from '../../punch/types/punch.types'
 
 interface RemoteTimeEntryRow {
   id: string
+  nsr: number
   user_id: string
   colaborador_id: string | null
   punch_type: string
@@ -19,6 +20,7 @@ interface RemoteTimeEntryRow {
 function toLocalPunchRecord(row: RemoteTimeEntryRow): LocalPunchRecord {
   return {
     id: row.id,
+    nsr: row.nsr,
     userId: row.user_id,
     colaboradorId: row.colaborador_id || '',
     punchType: row.punch_type as PunchType,
@@ -51,7 +53,7 @@ export async function fetchRemotePunches(userId: string, startIso: string, endIs
   const { data, error } = await supabase
     .from('time_entries')
     .select(
-      'id, user_id, colaborador_id, punch_type, client_timestamp, latitude, longitude, accuracy_meters, is_offline, is_out_of_bounds, distance_from_hq_meters, audit_metadata'
+      'id, nsr, user_id, colaborador_id, punch_type, client_timestamp, latitude, longitude, accuracy_meters, is_offline, is_out_of_bounds, distance_from_hq_meters, audit_metadata'
     )
     .eq('user_id', userId)
     .gte('client_timestamp', startIso)

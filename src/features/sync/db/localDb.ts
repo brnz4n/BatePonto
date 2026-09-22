@@ -1,15 +1,27 @@
 import Dexie, { type Table } from 'dexie'
 import type { LocalPunchRecord, EmployeeProfile } from '../../punch/types/punch.types'
+import type { BlockchainBlock, BlockchainHead } from '../../punch/services/blockchainLedger'
 
 export class AtlasPontoDatabase extends Dexie {
   punches!: Table<LocalPunchRecord, string>
   cachedProfile!: Table<EmployeeProfile, string>
+  blockchainBlocks!: Table<BlockchainBlock, string>
+  blockchainHead!: Table<BlockchainHead, number>
 
   constructor() {
     super('AtlasPontoDB')
     this.version(1).stores({
       punches: 'id, userId, punchType, clientTimestamp, syncStatus, isOffline',
       cachedProfile: 'id, name, registrationNumber',
+    })
+
+    // Ledger local de encadeamento de hashes (proof of chronology) — tabelas novas, upgrade
+    // aditivo do Dexie, não mexe no schema/dados das stores da v1.
+    this.version(2).stores({
+      punches: 'id, userId, punchType, clientTimestamp, syncStatus, isOffline',
+      cachedProfile: 'id, name, registrationNumber',
+      blockchainBlocks: 'punchId, sequence, colaboradorId',
+      blockchainHead: 'id',
     })
   }
 }

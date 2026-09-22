@@ -12,10 +12,10 @@ dist
 dist-ssr
 *.local
 
-# Segredos (chaves do Supabase)
+# Segredos (chaves do Supabase) — inclui .env.example, que chegou a ser versionado com a URL/
+# chave publicável reais do projeto; agora fica só local, nunca mais commitado.
 .env
 .env.*
-!.env.example
 
 # Editor directories and files
 .vscode/*

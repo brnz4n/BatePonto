@@ -7,6 +7,7 @@ import { ResetPasswordScreen } from './features/auth/components/ResetPasswordScr
 import { AuthenticatedLayout } from './app/AuthenticatedLayout'
 import { PunchHomeScreen } from './features/punch/components/PunchHomeScreen'
 import { HistoryScreen } from './features/history/components/HistoryScreen'
+import { ProfileScreen } from './features/profile/components/ProfileScreen'
 
 function LoadingSplash() {
   return (
@@ -74,6 +75,7 @@ export function App() {
       <Route path="/" element={authenticatedElement}>
         <Route index element={<PunchHomeScreen />} />
         <Route path="historico" element={<HistoryScreen />} />
+        <Route path="perfil" element={<ProfileScreen />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

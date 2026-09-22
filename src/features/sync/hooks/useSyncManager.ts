@@ -15,6 +15,7 @@ export function useSyncManager() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
   const [circuitOpenUntil, setCircuitOpenUntil] = useState<number | null>(null)
+  const [isCircuitOpen, setIsCircuitOpen] = useState<boolean>(false)
 
   const refreshCounts = useCallback(async () => {
     try {
@@ -54,6 +55,26 @@ export function useSyncManager() {
     await refreshCounts()
     await triggerSync(true)
   }, [refreshCounts, triggerSync])
+
+  // `isCircuitOpen` precisa expirar sozinho quando o cooldown passa, mesmo sem nenhuma outra
+  // sincronização disparar um re-render — por isso vira estado próprio, atualizado num efeito
+  // (Date.now() fora do corpo do render) em vez de recalculado impuramente a cada render.
+  useEffect(() => {
+    if (circuitOpenUntil == null) {
+      setIsCircuitOpen(false)
+      return
+    }
+
+    const remainingMs = circuitOpenUntil - Date.now()
+    if (remainingMs <= 0) {
+      setIsCircuitOpen(false)
+      return
+    }
+
+    setIsCircuitOpen(true)
+    const timer = setTimeout(() => setIsCircuitOpen(false), remainingMs)
+    return () => clearTimeout(timer)
+  }, [circuitOpenUntil])
 
   useEffect(() => {
     refreshCounts()
@@ -96,7 +117,7 @@ export function useSyncManager() {
     pausedAuthCount,
     isSyncing,
     lastSyncTime,
-    isCircuitOpen: circuitOpenUntil != null && circuitOpenUntil > Date.now(),
+    isCircuitOpen,
     circuitOpenUntil,
     triggerSync,
     retryFailed,

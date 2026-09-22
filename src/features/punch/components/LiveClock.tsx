@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react'
-import { Clock, MapPin, Building2, AlertTriangle } from 'lucide-react'
+import React, { useState, useEffect, memo } from 'react'
+import { Clock, MapPin, MapPinOff, Building2, AlertTriangle, RefreshCw } from 'lucide-react'
+import type { GeolocationErrorType } from '../../../shared/hooks/useGeolocation'
 
 interface LiveClockProps {
   hasGpsSignal?: boolean
   accuracyMeters?: number
   geofence?: { distanceMeters: number; isWithinBounds: boolean } | null
+  isLoadingGps?: boolean
+  gpsError?: string | null
+  gpsErrorType?: GeolocationErrorType | null
+  onRetryGps?: () => void
 }
 
-export const LiveClock: React.FC<LiveClockProps> = ({ hasGpsSignal, accuracyMeters, geofence }) => {
+// Isolado num componente próprio (sem props) para que o tick de 1s re-renderize só o relógio —
+// sem isso, o card inteiro (badges de GPS, geofence, alertas) re-renderizava a cada segundo junto.
+const ClockDigits: React.FC = memo(() => {
   const [time, setTime] = useState<Date>(new Date())
 
   useEffect(() => {
@@ -31,6 +38,30 @@ export const LiveClock: React.FC<LiveClockProps> = ({ hasGpsSignal, accuracyMete
   const displayDate = dateFormatted.charAt(0).toUpperCase() + dateFormatted.slice(1)
 
   return (
+    <>
+      <div className="flex items-baseline justify-center font-extrabold tracking-tight text-white mb-2 select-none">
+        <span className="text-6xl font-mono tabular-nums drop-shadow-md">{hours}</span>
+        <span className="text-2xl font-mono text-[#8C3843] ml-1.5 drop-shadow-sm font-semibold">:{seconds}</span>
+      </div>
+
+      <div className="text-sm font-medium text-slate-300 text-center select-none">
+        {displayDate}
+      </div>
+    </>
+  )
+})
+ClockDigits.displayName = 'ClockDigits'
+
+export const LiveClock: React.FC<LiveClockProps> = ({
+  hasGpsSignal,
+  accuracyMeters,
+  geofence,
+  isLoadingGps,
+  gpsError,
+  gpsErrorType,
+  onRetryGps,
+}) => {
+  return (
     <div className="flex flex-col items-center justify-center p-6 w-full max-w-sm mx-auto bg-slate-900/60 backdrop-blur-md rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
       {/* Luz ambiente sutil no topo do card */}
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-24 bg-[#722F37]/20 blur-2xl rounded-full pointer-events-none" />
@@ -40,19 +71,34 @@ export const LiveClock: React.FC<LiveClockProps> = ({ hasGpsSignal, accuracyMete
         <span>Horário Oficial (Brasília)</span>
       </div>
 
-      <div className="flex items-baseline justify-center font-extrabold tracking-tight text-white mb-2 select-none">
-        <span className="text-6xl font-mono tabular-nums drop-shadow-md">{hours}</span>
-        <span className="text-2xl font-mono text-[#8C3843] ml-1.5 drop-shadow-sm font-semibold">:{seconds}</span>
-      </div>
-
-      <div className="text-sm font-medium text-slate-300 text-center select-none">
-        {displayDate}
-      </div>
+      <ClockDigits />
 
       <div className="mt-4 pt-3 border-t border-slate-800/80 w-full flex items-center justify-between text-xs text-slate-400 px-1">
         <div className="flex items-center gap-1.5">
-          <div className={`w-2 h-2 rounded-full ${hasGpsSignal ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-          <span>{hasGpsSignal ? 'GPS Ativo' : 'Aguardando GPS'}</span>
+          <div
+            className={`w-2 h-2 rounded-full ${
+              hasGpsSignal
+                ? 'bg-emerald-500 animate-pulse'
+                : isLoadingGps
+                ? 'bg-amber-400 animate-ping'
+                : gpsError
+                ? 'bg-amber-500'
+                : 'bg-amber-500'
+            }`}
+          />
+          <span className="font-medium">
+            {hasGpsSignal
+              ? 'GPS Ativo'
+              : isLoadingGps
+              ? 'Localizando...'
+              : gpsErrorType === 'PERMISSION_DENIED'
+              ? 'Localização Bloqueada'
+              : gpsErrorType === 'POSITION_UNAVAILABLE'
+              ? 'GPS Desativado'
+              : gpsErrorType === 'TIMEOUT'
+              ? 'Sinal de GPS Fraco'
+              : 'Aguardando GPS'}
+          </span>
         </div>
         {accuracyMeters ? (
           <div className="flex items-center gap-1 text-slate-400">
@@ -60,9 +106,40 @@ export const LiveClock: React.FC<LiveClockProps> = ({ hasGpsSignal, accuracyMete
             <span>Precisão: ±{accuracyMeters}m</span>
           </div>
         ) : (
-          <span className="text-slate-500">Alta Precisão</span>
+          <span className="text-slate-500">
+            {isLoadingGps ? 'Buscando...' : gpsError ? 'Sem sinal' : 'Alta Precisão'}
+          </span>
         )}
       </div>
+
+      {/* Alerta Inline Não-Bloqueante quando o GPS falhar */}
+      {gpsError && !hasGpsSignal && !isLoadingGps && (
+        <div className="mt-2.5 w-full p-2.5 rounded-xl bg-amber-950/40 border border-amber-800/40 text-left">
+          <div className="flex items-start gap-2">
+            <MapPinOff className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[11px] font-medium text-amber-200 leading-snug">
+                {gpsErrorType === 'PERMISSION_DENIED'
+                  ? 'Permissão negada no navegador. Habilite a localização no ícone de cadeado/ajustes do navegador para a auditoria de presença do RH.'
+                  : gpsErrorType === 'POSITION_UNAVAILABLE'
+                  ? 'Sinal indisponível. Verifique se o GPS/Localização do seu celular está ativado.'
+                  : 'Tempo esgotado ao buscar satélites. Você pode bater o ponto normalmente ou tentar reconectar.'}
+              </p>
+              {onRetryGps && (
+                <button
+                  type="button"
+                  onClick={onRetryGps}
+                  disabled={isLoadingGps}
+                  className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-300 hover:text-amber-100 bg-amber-900/40 hover:bg-amber-900/70 px-2.5 py-1 rounded-lg border border-amber-700/50 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isLoadingGps ? 'animate-spin' : ''}`} />
+                  <span>Tentar novamente</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {geofence && (
         <div

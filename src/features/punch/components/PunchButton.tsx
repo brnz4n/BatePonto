@@ -1,5 +1,5 @@
 import React from 'react'
-import { Fingerprint, Loader2, HelpCircle } from 'lucide-react'
+import { Fingerprint, Loader2 } from 'lucide-react'
 import type { PunchType } from '../types/punch.types'
 
 // Marcação Sequencial Neutra: o rótulo principal do botão nunca varia por tipo de batida —
@@ -11,7 +11,6 @@ interface PunchButtonProps {
   sublabel: string
   isPunching: boolean
   onClick: () => void
-  onOpenOverrideModal?: () => void
   disabled?: boolean
 }
 
@@ -20,7 +19,6 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
   sublabel,
   isPunching,
   onClick,
-  onOpenOverrideModal,
   disabled,
 }) => {
   return (
@@ -69,17 +67,6 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
       {/* Legenda explicativa contextual abaixo do botão */}
       <div className="mt-3 text-center max-w-xs px-4">
         <p className="text-xs text-slate-400 font-medium">{sublabel}</p>
-
-        {onOpenOverrideModal && (
-          <button
-            type="button"
-            onClick={onOpenOverrideModal}
-            className="mt-2 text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-2 transition-colors cursor-pointer inline-flex items-center justify-center gap-1 mx-auto"
-          >
-            <HelpCircle className="w-3 h-3 text-[#c25b68]" />
-            <span>Esqueceu o ponto anterior? Alterar tipo</span>
-          </button>
-        )}
       </div>
     </div>
   )

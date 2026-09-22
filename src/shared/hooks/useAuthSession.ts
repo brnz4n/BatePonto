@@ -21,6 +21,7 @@ const DEMO_PROFILE: EmployeeProfile = {
   company: 'RFeitosa Group',
   email: 'demo@rfeitosagroup.com.br',
   isFirstLogin: false,
+  cpf: '00000000000',
 }
 
 interface ColaboradorRow {
@@ -33,6 +34,7 @@ interface ColaboradorRow {
   email: string
   is_first_login: boolean
   ativo: boolean
+  cpf: string
 }
 
 type FetchProfileResult =
@@ -48,7 +50,7 @@ async function fetchColaboradorProfile(authUserId: string): Promise<FetchProfile
   try {
     const { data, error } = await supabase
       .from('colaboradores')
-      .select('id, nome, matricula, cargo, departamento, empresa, email, is_first_login, ativo')
+      .select('id, nome, matricula, cargo, departamento, empresa, email, is_first_login, ativo, cpf')
       .eq('auth_user_id', authUserId)
       .maybeSingle()
 
@@ -77,6 +79,7 @@ function toEmployeeProfile(authUserId: string, row: ColaboradorRow): EmployeePro
     company: row.empresa,
     email: row.email,
     isFirstLogin: row.is_first_login,
+    cpf: row.cpf,
   }
 }
 

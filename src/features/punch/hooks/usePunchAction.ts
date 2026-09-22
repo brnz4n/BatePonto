@@ -3,6 +3,7 @@ import { db } from '../../sync/db/localDb'
 import { punchPayloadSchema } from '../schemas/punch.schema'
 import { checkVelocityAnomaly } from '../../../shared/utils/antiFraud'
 import { checkGeofence } from '../../../shared/utils/geofence'
+import { appendBlock } from '../services/blockchainLedger'
 import type { LocalPunchRecord, PunchCoordinates, PunchType } from '../types/punch.types'
 import type { GeolocationState } from '../../../shared/hooks/useGeolocation'
 
@@ -166,6 +167,22 @@ export function usePunchAction({
 
         // Gravação local imediata no IndexedDB — fricção zero: nada aqui espera o GPS.
         await db.punches.add(newRecord)
+
+        // Encadeamento criptográfico (hash chaining) — grava o elo antes de liberar a UI para
+        // que o comprovante já saia com prova de cronologia, mesmo offline.
+        const block = await appendBlock({
+          punchId: punchId,
+          colaboradorId,
+          punchType: effectivePunchType,
+          timestampIso: clientIso,
+          coords: cachedCoords,
+        })
+        newRecord.auditMetadata = {
+          ...newRecord.auditMetadata,
+          blockchain: { hash: block.hash, previousHash: block.previousHash, sequence: block.sequence },
+        }
+        await db.punches.update(punchId, { auditMetadata: newRecord.auditMetadata })
+
         await refreshTodayPunches()
 
         if (effectivePunchType === 'SAIDA_INTERVALO' && onLunchRegistered) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AlertTriangle, RefreshCw, ShieldOff } from 'lucide-react'
 
 interface SyncFailureBannerProps {
@@ -15,9 +15,26 @@ export const SyncFailureBanner: React.FC<SyncFailureBannerProps> = ({
   circuitOpenUntil,
 }) => {
   const [isRetrying, setIsRetrying] = useState(false)
+  const [minutesLeft, setMinutesLeft] = useState<number | null>(null)
+
+  // Contagem regressiva derivada num efeito (Date.now() fica fora do corpo do render) — sem
+  // isso o texto "nova tentativa em até Xmin" ficaria congelado no valor calculado na 1ª render.
+  useEffect(() => {
+    if (!isCircuitOpen || !circuitOpenUntil) {
+      setMinutesLeft(null)
+      return
+    }
+
+    const updateMinutesLeft = () => {
+      setMinutesLeft(Math.max(1, Math.ceil((circuitOpenUntil - Date.now()) / 60000)))
+    }
+
+    updateMinutesLeft()
+    const interval = setInterval(updateMinutesLeft, 15000)
+    return () => clearInterval(interval)
+  }, [isCircuitOpen, circuitOpenUntil])
 
   if (isCircuitOpen) {
-    const minutesLeft = circuitOpenUntil ? Math.max(1, Math.ceil((circuitOpenUntil - Date.now()) / 60000)) : null
     return (
       <div className="flex items-center gap-2 p-3 bg-amber-950/60 border border-amber-800/80 rounded-xl text-xs text-amber-200">
         <ShieldOff className="w-4 h-4 text-amber-400 shrink-0" />
