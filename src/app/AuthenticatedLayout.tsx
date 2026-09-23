@@ -28,7 +28,7 @@ export function AuthenticatedLayout({ profile, onSignOut }: AuthenticatedLayoutP
   const [isInstallModalForced, setIsInstallModalForced] = useState(false)
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A192F] text-slate-100 selection:bg-[#722F37]">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#212965] selection:bg-[#6d0001] selection:text-white">
       <Header
         profile={profile}
         isOnline={syncManager.isOnline}

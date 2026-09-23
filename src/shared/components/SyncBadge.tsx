@@ -17,10 +17,10 @@ export const SyncBadge: React.FC<SyncBadgeProps> = ({
   if (!isOnline) {
     return (
       <div
-        className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-950/60 border border-amber-800/60 text-amber-300 rounded-full text-xs font-medium"
+        className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-medium"
         title="Dispositivo sem conexão. Os pontos estão sendo salvos localmente e serão sincronizados automaticamente."
       >
-        <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+        <WifiOff className="w-3.5 h-3.5 text-amber-600" />
         <span>Offline {pendingCount > 0 ? `(${pendingCount})` : ''}</span>
       </div>
     )
@@ -28,8 +28,8 @@ export const SyncBadge: React.FC<SyncBadgeProps> = ({
 
   if (isSyncing) {
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-sky-950/60 border border-sky-800/60 text-sky-300 rounded-full text-xs font-medium">
-        <RefreshCw className="w-3.5 h-3.5 text-sky-400 animate-spin" />
+      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-sky-50 border border-sky-200 text-sky-700 rounded-full text-xs font-medium">
+        <RefreshCw className="w-3.5 h-3.5 text-sky-600 animate-spin" />
         <span>Sincronizando...</span>
       </div>
     )
@@ -39,10 +39,10 @@ export const SyncBadge: React.FC<SyncBadgeProps> = ({
     return (
       <button
         onClick={onManualSync}
-        className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-950/60 border border-amber-700/60 hover:bg-amber-900/60 text-amber-300 rounded-full text-xs font-medium transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-700 rounded-full text-xs font-medium transition-colors cursor-pointer"
         title="Clique para sincronizar os registros pendentes agora"
       >
-        <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+        <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
         <span>{pendingCount} pendente{pendingCount > 1 ? 's' : ''}</span>
       </button>
     )
@@ -50,12 +50,12 @@ export const SyncBadge: React.FC<SyncBadgeProps> = ({
 
   return (
     <div
-      className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-950/50 border border-emerald-800/50 text-emerald-300 rounded-full text-xs font-medium"
+      className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-medium"
       title="Conectado e todos os pontos sincronizados na nuvem"
     >
-      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
       <span className="hidden sm:inline">Conectado</span>
-      <Wifi className="w-3 h-3 text-emerald-400 sm:hidden" />
+      <Wifi className="w-3 h-3 text-emerald-600 sm:hidden" />
     </div>
   )
 }

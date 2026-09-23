@@ -77,63 +77,63 @@ export function ProfileScreen() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-slate-200">
-        <UserCircle2 className="w-4.5 h-4.5 text-[#c25b68]" />
+      <div className="flex items-center gap-2 text-[#212965]">
+        <UserCircle2 className="w-4.5 h-4.5 text-[#6d0001]" />
         <h1 className="text-base font-bold">Meu Perfil</h1>
       </div>
 
       {/* Cartão de Identificação */}
-      <div className="flex items-center gap-3 p-4 bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8C3843] to-[#4A151B] border border-slate-700/80 flex items-center justify-center text-lg font-bold text-white shadow-md shrink-0">
+      <div className="flex items-center gap-3 p-4 bg-[#212965] rounded-2xl shadow-md">
+        <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-lg font-bold text-white shrink-0">
           {initials}
         </div>
         <div className="min-w-0">
           <h2 className="text-sm font-bold text-white leading-snug truncate">{profile.name}</h2>
-          <p className="text-xs text-slate-400 truncate">{profile.role}</p>
+          <p className="text-xs text-slate-300 truncate">{profile.role}</p>
         </div>
       </div>
 
       {/* Resumo do Mês */}
-      <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
-          <CalendarCheck2 className="w-4 h-4 text-[#c25b68]" />
-          <h2 className="text-sm font-semibold text-slate-200">Resumo de {MONTH_LABELS[now.getMonth()]}</h2>
+          <CalendarCheck2 className="w-4 h-4 text-[#6d0001]" />
+          <h2 className="text-sm font-semibold text-[#212965]">Resumo de {MONTH_LABELS[now.getMonth()]}</h2>
         </div>
 
         {isSummaryLoading ? (
-          <div className="flex items-center justify-center py-4 text-slate-500">
+          <div className="flex items-center justify-center py-4 text-[#727272]">
             <Loader2 className="w-4 h-4 animate-spin" />
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-              <span className="text-lg font-bold text-white font-mono block">{monthlySummary?.workedHoursLabel ?? '0h'}</span>
-              <span className="text-[10px] text-slate-500">Horas trabalhadas</span>
+            <div className="bg-[#F8F9FA] border border-slate-200 rounded-xl p-3 text-center">
+              <span className="text-lg font-bold text-[#212965] font-mono block">{monthlySummary?.workedHoursLabel ?? '0h'}</span>
+              <span className="text-[10px] text-[#727272]">Horas trabalhadas</span>
             </div>
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-              <span className="text-lg font-bold text-white font-mono block">{monthlySummary?.daysWorked ?? 0}</span>
-              <span className="text-[10px] text-slate-500">Dias trabalhados</span>
+            <div className="bg-[#F8F9FA] border border-slate-200 rounded-xl p-3 text-center">
+              <span className="text-lg font-bold text-[#212965] font-mono block">{monthlySummary?.daysWorked ?? 0}</span>
+              <span className="text-[10px] text-[#727272]">Dias trabalhados</span>
             </div>
           </div>
         )}
 
-        <p className="mt-2.5 text-[10px] text-slate-500 leading-relaxed">
+        <p className="mt-2.5 text-[10px] text-[#727272] leading-relaxed">
           Estimativa a partir das suas batidas — jornadas ainda abertas hoje não entram na soma.
         </p>
       </div>
 
       {/* Dados Cadastrais */}
-      <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-800/80 overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-800/60">
-          <h2 className="text-sm font-semibold text-slate-200">Dados Cadastrais</h2>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <h2 className="text-sm font-semibold text-[#212965]">Dados Cadastrais</h2>
         </div>
-        <div className="divide-y divide-slate-800/60">
+        <div className="divide-y divide-slate-100">
           {infoRows.map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-center gap-3 px-4 py-2.5">
-              <Icon className="w-4 h-4 text-slate-500 shrink-0" />
+              <Icon className="w-4 h-4 text-[#727272] shrink-0" />
               <div className="min-w-0">
-                <span className="text-[10px] text-slate-500 block">{label}</span>
-                <span className="text-xs text-slate-200 font-medium truncate block">{value}</span>
+                <span className="text-[10px] text-[#727272] block">{label}</span>
+                <span className="text-xs text-[#212965] font-medium truncate block">{value}</span>
               </div>
             </div>
           ))}
@@ -141,30 +141,30 @@ export function ProfileScreen() {
       </div>
 
       {/* Banco de Horas (placeholder) */}
-      <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
         <div className="flex items-center gap-2 mb-1.5">
-          <Clock3 className="w-4 h-4 text-[#c25b68]" />
-          <h2 className="text-sm font-semibold text-slate-200">Banco de Horas</h2>
+          <Clock3 className="w-4 h-4 text-[#6d0001]" />
+          <h2 className="text-sm font-semibold text-[#212965]">Banco de Horas</h2>
         </div>
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-[#727272] leading-relaxed">
           Em breve: saldo de horas positivas/negativas calculado a partir das suas batidas.
         </p>
       </div>
 
       {/* Justificar Ponto Esquecido */}
-      <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
         <div className="flex items-center gap-2 mb-1.5">
-          <CalendarClock className="w-4 h-4 text-[#c25b68]" />
-          <h2 className="text-sm font-semibold text-slate-200">Justificar Ponto Esquecido</h2>
+          <CalendarClock className="w-4 h-4 text-[#6d0001]" />
+          <h2 className="text-sm font-semibold text-[#212965]">Justificar Ponto Esquecido</h2>
         </div>
-        <p className="text-xs text-slate-500 leading-relaxed mb-3">
+        <p className="text-xs text-[#727272] leading-relaxed mb-3">
           Esqueceu de bater o ponto em um dia anterior? Escolha a data, a hora e explique o motivo — o ajuste
           fica registrado para conferência do RH.
         </p>
 
         {successNotice && (
-          <div className="mb-3 p-2.5 bg-emerald-950/60 border border-emerald-800/60 rounded-xl text-xs text-emerald-200 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="mb-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{successNotice}</span>
           </div>
         )}
@@ -172,7 +172,7 @@ export function ProfileScreen() {
         <button
           type="button"
           onClick={() => setIsJustifyModalOpen(true)}
-          className="w-full py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+          className="w-full py-2.5 bg-[#212965] hover:bg-[#3a4384] text-white font-semibold rounded-xl text-xs transition-all cursor-pointer"
         >
           Justificar um ponto
         </button>

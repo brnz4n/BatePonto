@@ -13,7 +13,7 @@ import { usePunchStateMachine } from '../hooks/usePunchStateMachine'
 import { usePunchAction } from '../hooks/usePunchAction'
 import type { LocalPunchRecord } from '../types/punch.types'
 import type { AuthenticatedContext } from '../../../app/AuthenticatedLayout'
-import { ShieldCheck, UserCheck, AlertCircle, Wrench } from 'lucide-react'
+import { ShieldCheck, UserCheck, AlertCircle, Wrench, BadgeCheck } from 'lucide-react'
 
 export function PunchHomeScreen() {
   const { profile, syncManager, notificationManager } = useOutletContext<AuthenticatedContext>()
@@ -63,25 +63,25 @@ export function PunchHomeScreen() {
       .slice(-1)[0] || null
 
   const workStatusMap: Record<string, { text: string; color: string }> = {
-    FORA_DE_EXPEDIENTE: { text: 'Fora de Expediente', color: 'bg-slate-800 text-slate-300 border-slate-700' },
-    TRABALHANDO: { text: 'Em Jornada Ativa', color: 'bg-emerald-950/70 text-emerald-300 border-emerald-800/60' },
-    EM_INTERVALO: { text: 'Em Intervalo (Almoço)', color: 'bg-amber-950/70 text-amber-300 border-amber-800/60' },
-    JORNADA_ENCERRADA: { text: 'Jornada Concluída', color: 'bg-blue-950/70 text-blue-300 border-blue-800/60' },
+    FORA_DE_EXPEDIENTE: { text: 'Fora de Expediente', color: 'bg-white/10 text-slate-200 border-white/15' },
+    TRABALHANDO: { text: 'Jornada Ativa', color: 'bg-emerald-400/15 text-emerald-200 border-emerald-300/25' },
+    EM_INTERVALO: { text: 'Em Intervalo (Almoço)', color: 'bg-amber-400/15 text-amber-200 border-amber-300/25' },
+    JORNADA_ENCERRADA: { text: 'Jornada Concluída', color: 'bg-sky-400/15 text-sky-200 border-sky-300/25' },
   }
 
   const currentStatusInfo = workStatusMap[currentWorkStatus] || workStatusMap.FORA_DE_EXPEDIENTE
 
   return (
     <div className="space-y-4">
-      {/* Card do Colaborador e Status Atual */}
-      <div className="flex items-center justify-between p-3.5 bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl">
+      {/* Card do Colaborador (Âncora de Autoridade) */}
+      <div className="p-4 bg-[#212965] rounded-2xl text-white shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-300 border border-slate-700">
-            <UserCheck className="w-5 h-5 text-[#c25b68]" />
+          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white shrink-0">
+            <UserCheck className="w-5 h-5" />
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-white leading-snug">{profile.name}</h2>
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold leading-snug truncate">{profile.name}</h2>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-300 flex-wrap">
               <span>Matrícula: {profile.registrationNumber}</span>
               <span>•</span>
               <span>{profile.department}</span>
@@ -89,15 +89,18 @@ export function PunchHomeScreen() {
           </div>
         </div>
 
-        <div className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${currentStatusInfo.color}`}>
+        <div
+          className={`mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${currentStatusInfo.color}`}
+        >
+          <BadgeCheck className="w-3.5 h-3.5" />
           {currentStatusInfo.text}
         </div>
       </div>
 
       {/* Kill Switch: Admin pode desabilitar o botão de bater ponto sem novo deploy */}
       {!isPunchEnabled && (
-        <div className="flex items-center gap-2 p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200">
-          <Wrench className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+          <Wrench className="w-4 h-4 text-red-500 shrink-0" />
           <span className="leading-snug">
             {maintenanceMessage || 'Sistema em manutenção — o registro de ponto está temporariamente desabilitado.'}
           </span>
@@ -134,8 +137,8 @@ export function PunchHomeScreen() {
 
       {/* Alerta de Erro se houver falha de validação Zod */}
       {errorMessage && (
-        <div className="p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -154,11 +157,11 @@ export function PunchHomeScreen() {
 
       {/* Rodapé de Compliance e Segurança */}
       <footer className="mt-8 pb-4 text-center">
-        <div className="inline-flex items-center gap-1.5 text-[11px] text-slate-500">
-          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+        <div className="inline-flex items-center gap-1.5 text-[11px] text-[#727272]">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#727272]" />
           <span>Sistema em conformidade com a Portaria 671/2021 MTE (REP-P)</span>
         </div>
-        <div className="text-[10px] text-slate-600 mt-1">
+        <div className="text-[10px] text-slate-400 mt-1">
           Atlas Ponto • RFeitosa Group • v1.0.1
         </div>
       </footer>

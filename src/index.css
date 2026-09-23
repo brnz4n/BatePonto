@@ -21,19 +21,27 @@
   --color-silver-200: #e2e8f0;
   --color-silver-300: #cbd5e1;
   --color-silver-400: #94a3b8;
+
+  /* Identidade Corporativa RFeitosa Group (Light Mode) */
+  --color-brand-navy: #212965;
+  --color-brand-navy-light: #3a4384;
+  --color-brand-wine: #6d0001;
+  --color-brand-wine-light: #8f0002;
+  --color-brand-gray: #727272;
+  --color-ice: #f8f9fa;
 }
 
 :root {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: #0a192f;
-  color: #f8fafc;
+  background-color: #f8f9fa;
+  color: #212965;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   user-select: none;

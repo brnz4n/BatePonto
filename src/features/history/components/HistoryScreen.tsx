@@ -92,14 +92,14 @@ export function HistoryScreen() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-slate-200">
-        <HistoryIcon className="w-4.5 h-4.5 text-[#c25b68]" />
+      <div className="flex items-center gap-2 text-[#212965]">
+        <HistoryIcon className="w-4.5 h-4.5 text-[#6d0001]" />
         <h1 className="text-base font-bold">Histórico de Pontos</h1>
       </div>
 
       {loadNotice && (
-        <div className="p-2.5 bg-amber-950/60 border border-amber-800/80 rounded-xl text-xs text-amber-200 flex items-center gap-2">
-          <CloudOff className="w-4 h-4 text-amber-400 shrink-0" />
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+          <CloudOff className="w-4 h-4 text-amber-600 shrink-0" />
           <span>{loadNotice}</span>
         </div>
       )}
@@ -109,7 +109,7 @@ export function HistoryScreen() {
         <select
           value={month}
           onChange={(e) => setMonth(Number(e.target.value))}
-          className="flex-1 px-3 py-2.5 bg-slate-900/60 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-[#8C3843]"
+          className="flex-1 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-[#212965] focus:outline-none focus:border-[#6d0001]"
         >
           {MONTH_LABELS.map((label, index) => (
             <option key={label} value={index}>{label}</option>
@@ -119,7 +119,7 @@ export function HistoryScreen() {
         <select
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
-          className="w-28 px-3 py-2.5 bg-slate-900/60 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-[#8C3843]"
+          className="w-28 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-[#212965] focus:outline-none focus:border-[#6d0001]"
         >
           {yearOptions.map((y) => (
             <option key={y} value={y}>{y}</option>
@@ -133,52 +133,52 @@ export function HistoryScreen() {
           onClick={handleExportAfd}
           disabled={isExporting || !syncManager.isOnline}
           title={!syncManager.isOnline ? 'Requer conexão com a internet' : 'Gera um arquivo ilustrativo no formato AFD'}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-750 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700 text-slate-200 font-semibold rounded-xl text-sm transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 text-[#212965] font-semibold rounded-xl text-sm transition-all cursor-pointer shadow-sm"
         >
-          {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4 text-[#c25b68]" />}
+          {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4 text-[#6d0001]" />}
           Gerar Arquivo AFD
         </button>
 
         {exportError && (
-          <div className="mt-2 p-2.5 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <div className="mt-2 p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
             <span>{exportError}</span>
           </div>
         )}
 
-        <p className="mt-1.5 text-[10px] text-slate-500 leading-relaxed">
+        <p className="mt-1.5 text-[10px] text-[#727272] leading-relaxed">
           Layout Tipo 1/7/9 (CRC-16, SHA-256, ISO-8859-1) da Portaria 671/2021 — valide as posições de campo com o RH antes de uso em fiscalização real.
         </p>
       </div>
 
       {receiptError && (
-        <div className="p-2.5 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
           <span>{receiptError}</span>
         </div>
       )}
 
       {/* Lista de Registros do Período */}
-      <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-800/80 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60">
-          <h2 className="text-sm font-semibold text-slate-200">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <h2 className="text-sm font-semibold text-[#212965]">
             {MONTH_LABELS[month]} de {year}
           </h2>
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-xs font-mono text-[#727272]">
             {punches.length} {punches.length === 1 ? 'registro' : 'registros'}
           </span>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-10 text-slate-500">
+          <div className="flex items-center justify-center py-10 text-[#727272]">
             <Loader2 className="w-5 h-5 animate-spin" />
           </div>
         ) : punches.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-xs px-4">
+          <div className="text-center py-8 text-[#727272] text-xs px-4">
             Nenhuma batida registrada neste período (neste dispositivo).
           </div>
         ) : (
-          <div className="divide-y divide-slate-800/60">
+          <div className="divide-y divide-slate-100">
             {displayedPunches.map((punch) => {
               const date = new Date(punch.clientTimestamp)
               const dateFormatted = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
@@ -189,10 +189,10 @@ export function HistoryScreen() {
               return (
                 <div key={punch.id} className="flex items-center justify-between px-4 py-2.5">
                   <div>
-                    <span className="text-xs font-semibold text-slate-200 block">
+                    <span className="text-xs font-semibold text-[#212965] block">
                       {PUNCH_TYPE_SHORT[punch.punchType] || punch.punchType}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="text-[10px] text-[#727272] font-mono">
                       {dateFormatted} às {timeFormatted}
                     </span>
                   </div>
@@ -201,15 +201,15 @@ export function HistoryScreen() {
                     {isOutOfBounds && (
                       <span
                         title="Registrado fora do raio da sede"
-                        className="text-[10px] text-amber-400 bg-amber-950/40 px-1.5 py-0.5 rounded-md border border-amber-800/40"
+                        className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200"
                       >
                         Fora da sede
                       </span>
                     )}
                     {isSynced ? (
-                      <span title="Sincronizado"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /></span>
+                      <span title="Sincronizado"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /></span>
                     ) : (
-                      <span title="Aguardando sincronização"><Clock className="w-3.5 h-3.5 text-amber-400" /></span>
+                      <span title="Aguardando sincronização"><Clock className="w-3.5 h-3.5 text-amber-600" /></span>
                     )}
                     <button
                       type="button"
@@ -217,7 +217,7 @@ export function HistoryScreen() {
                       disabled={receiptGeneratingId === punch.id}
                       title="Baixar comprovante em PDF"
                       aria-label="Baixar comprovante em PDF"
-                      className="p-1.5 text-slate-400 hover:text-[#c25b68] disabled:opacity-50 rounded-lg hover:bg-slate-800/80 transition-colors cursor-pointer"
+                      className="p-1.5 text-[#727272] hover:text-[#6d0001] disabled:opacity-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                       {receiptGeneratingId === punch.id ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />

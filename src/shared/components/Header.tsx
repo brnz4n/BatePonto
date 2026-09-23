@@ -1,5 +1,5 @@
 import React from 'react'
-import { Smartphone, Building2, Bell, BellRing, LogOut } from 'lucide-react'
+import { Smartphone, Bell, BellRing, LogOut } from 'lucide-react'
 import { SyncBadge } from './SyncBadge'
 import type { EmployeeProfile } from '../../features/punch/types/punch.types'
 
@@ -36,26 +36,16 @@ export const Header: React.FC<HeaderProps> = ({
     .toUpperCase()
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#0A192F]/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 select-none">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm px-4 py-3 select-none">
       <div className="max-w-md mx-auto flex items-center justify-between gap-2">
         {/* Logo e Identidade do Grupo */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#722F37] to-[#4A151B] border border-slate-700/80 flex items-center justify-center shadow-md">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-extrabold tracking-tight text-white leading-none">
-                Atlas Ponto
-              </h1>
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#722F37]/40 text-[#c25b68] border border-[#722F37]/50">
-                PWA
-              </span>
-            </div>
-            <span className="text-[11px] text-slate-400 font-medium leading-tight block">
-              {profile.company}
-            </span>
-          </div>
+        <div className="leading-none">
+          <h1 className="text-lg font-extrabold tracking-tight text-[#212965]">
+            XRFeitosa
+          </h1>
+          <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#6d0001]">
+            GROUP
+          </span>
         </div>
 
         {/* Badges de Ação e Status */}
@@ -65,8 +55,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onRequestNotification}
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                 isNotificationGranted
-                  ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-800/40'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                  : 'text-[#727272] hover:text-[#212965] hover:bg-slate-100'
               }`}
               title={
                 isNotificationGranted
@@ -76,9 +66,9 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Lembretes de ponto"
             >
               {isNotificationGranted ? (
-                <BellRing className="w-4 h-4 text-emerald-400" />
+                <BellRing className="w-4 h-4 text-emerald-600" />
               ) : (
-                <Bell className="w-4 h-4 text-slate-400" />
+                <Bell className="w-4 h-4 text-[#727272]" />
               )}
             </button>
           )}
@@ -86,11 +76,11 @@ export const Header: React.FC<HeaderProps> = ({
           {!isStandalone && (
             <button
               onClick={onOpenInstallModal}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 text-[#727272] hover:text-[#212965] rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               title="Instalar na tela inicial do celular"
               aria-label="Instalar aplicativo"
             >
-              <Smartphone className="w-4 h-4 text-[#c25b68]" />
+              <Smartphone className="w-4 h-4 text-[#727272]" />
             </button>
           )}
 
@@ -103,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Avatar do Colaborador */}
           <div
-            className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 shadow-sm"
+            className="w-8 h-8 rounded-full bg-[#212965] flex items-center justify-center text-xs font-bold text-white shadow-sm"
             title={`${profile.name} (${profile.registrationNumber})`}
           >
             {initials}
@@ -112,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
           {onSignOut && (
             <button
               onClick={onSignOut}
-              className="p-1.5 text-slate-400 hover:text-red-400 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 text-[#727272] hover:text-[#6d0001] rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               title="Sair da conta"
               aria-label="Sair da conta"
             >

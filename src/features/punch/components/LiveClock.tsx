@@ -39,12 +39,12 @@ const ClockDigits: React.FC = memo(() => {
 
   return (
     <>
-      <div className="flex items-baseline justify-center font-extrabold tracking-tight text-white mb-2 select-none">
-        <span className="text-6xl font-mono tabular-nums drop-shadow-md">{hours}</span>
-        <span className="text-2xl font-mono text-[#8C3843] ml-1.5 drop-shadow-sm font-semibold">:{seconds}</span>
+      <div className="flex items-baseline justify-center font-extrabold tracking-tight text-[#212965] mb-2 select-none">
+        <span className="text-6xl font-mono tabular-nums">{hours}</span>
+        <span className="text-2xl font-mono text-[#6d0001] ml-1.5 font-semibold">:{seconds}</span>
       </div>
 
-      <div className="text-sm font-medium text-slate-300 text-center select-none">
+      <div className="text-sm font-medium text-[#727272] text-center select-none">
         {displayDate}
       </div>
     </>
@@ -62,18 +62,15 @@ export const LiveClock: React.FC<LiveClockProps> = ({
   onRetryGps,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center p-6 w-full max-w-sm mx-auto bg-slate-900/60 backdrop-blur-md rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
-      {/* Luz ambiente sutil no topo do card */}
-      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-24 bg-[#722F37]/20 blur-2xl rounded-full pointer-events-none" />
-
-      <div className="flex items-center gap-2 mb-2 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-        <Clock className="w-3.5 h-3.5 text-slate-400" />
+    <div className="flex flex-col items-center justify-center py-6 w-full max-w-sm mx-auto relative">
+      <div className="flex items-center gap-2 mb-2 text-[#727272] text-xs font-semibold uppercase tracking-wider">
+        <Clock className="w-3.5 h-3.5 text-[#727272]" />
         <span>Horário Oficial (Brasília)</span>
       </div>
 
       <ClockDigits />
 
-      <div className="mt-4 pt-3 border-t border-slate-800/80 w-full flex items-center justify-between text-xs text-slate-400 px-1">
+      <div className="mt-4 pt-3 border-t border-slate-200 w-full flex items-center justify-between text-xs text-[#727272] px-1">
         <div className="flex items-center gap-1.5">
           <div
             className={`w-2 h-2 rounded-full ${
@@ -101,12 +98,12 @@ export const LiveClock: React.FC<LiveClockProps> = ({
           </span>
         </div>
         {accuracyMeters ? (
-          <div className="flex items-center gap-1 text-slate-400">
-            <MapPin className="w-3 h-3 text-slate-400" />
+          <div className="flex items-center gap-1 text-[#727272]">
+            <MapPin className="w-3 h-3 text-[#727272]" />
             <span>Precisão: ±{accuracyMeters}m</span>
           </div>
         ) : (
-          <span className="text-slate-500">
+          <span className="text-slate-400">
             {isLoadingGps ? 'Buscando...' : gpsError ? 'Sem sinal' : 'Alta Precisão'}
           </span>
         )}
@@ -114,11 +111,11 @@ export const LiveClock: React.FC<LiveClockProps> = ({
 
       {/* Alerta Inline Não-Bloqueante quando o GPS falhar */}
       {gpsError && !hasGpsSignal && !isLoadingGps && (
-        <div className="mt-2.5 w-full p-2.5 rounded-xl bg-amber-950/40 border border-amber-800/40 text-left">
+        <div className="mt-2.5 w-full p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-left">
           <div className="flex items-start gap-2">
-            <MapPinOff className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <MapPinOff className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-[11px] font-medium text-amber-200 leading-snug">
+              <p className="text-[11px] font-medium text-amber-800 leading-snug">
                 {gpsErrorType === 'PERMISSION_DENIED'
                   ? 'Permissão negada no navegador. Habilite a localização no ícone de cadeado/ajustes do navegador para a auditoria de presença do RH.'
                   : gpsErrorType === 'POSITION_UNAVAILABLE'
@@ -130,7 +127,7 @@ export const LiveClock: React.FC<LiveClockProps> = ({
                   type="button"
                   onClick={onRetryGps}
                   disabled={isLoadingGps}
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-300 hover:text-amber-100 bg-amber-900/40 hover:bg-amber-900/70 px-2.5 py-1 rounded-lg border border-amber-700/50 transition-colors cursor-pointer disabled:opacity-50"
+                  className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg border border-amber-300 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3 h-3 ${isLoadingGps ? 'animate-spin' : ''}`} />
                   <span>Tentar novamente</span>
@@ -143,17 +140,17 @@ export const LiveClock: React.FC<LiveClockProps> = ({
 
       {geofence && (
         <div
-          className={`mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-semibold px-2 py-1.5 rounded-lg border ${
+          className={`mt-3 w-full flex items-center justify-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border bg-white ${
             geofence.isWithinBounds
-              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
-              : 'bg-amber-950/60 text-amber-300 border-amber-800/60'
+              ? 'text-[#727272] border-slate-200'
+              : 'text-amber-700 border-amber-200 bg-amber-50'
           }`}
           title="Distância calculada em tempo real até a sede da RFeitosa Group"
         >
           {geofence.isWithinBounds ? (
-            <Building2 className="w-3.5 h-3.5" />
+            <Building2 className="w-3.5 h-3.5 text-[#727272]" />
           ) : (
-            <AlertTriangle className="w-3.5 h-3.5" />
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
           )}
           <span>
             {geofence.isWithinBounds

@@ -29,13 +29,12 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
         disabled={isPunching || disabled}
         aria-label={BUTTON_LABEL}
         className={`
-          relative z-10 w-52 h-52 rounded-full
-          bg-gradient-to-br from-[#8C3843] via-[#722F37] to-[#4A151B]
-          hover:from-[#9C3F4B] hover:to-[#5C1B23]
-          active:scale-95 active:shadow-inner
+          relative z-10 w-48 h-48 rounded-full
+          bg-[#6d0001]
+          hover:bg-[#8f0002]
+          active:scale-95
           transition-all duration-200 ease-out
-          shadow-[0_12px_36px_rgba(114,47,55,0.45)]
-          border-4 border-slate-900/50
+          shadow-[0_16px_32px_rgba(109,0,1,0.35)]
           flex flex-col items-center justify-center p-4 text-center select-none
           cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
         `}
@@ -49,15 +48,13 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
           </div>
         ) : (
           <>
-            <div className="p-3 bg-white/10 rounded-full mb-1 shadow-inner">
-              <Fingerprint className="w-9 h-9 text-white drop-shadow-sm" />
-            </div>
+            <Fingerprint className="w-10 h-10 text-white mb-2" />
 
-            <span className="text-white font-bold text-lg leading-tight drop-shadow-md px-2 max-w-[170px]">
+            <span className="text-white font-bold text-lg leading-tight px-2 max-w-[170px]">
               {BUTTON_LABEL}
             </span>
 
-            <span className="text-slate-200/80 text-[10px] font-medium tracking-wide uppercase mt-1">
+            <span className="text-white/70 text-[10px] font-medium tracking-wide uppercase mt-1">
               Toque para registrar
             </span>
           </>
@@ -66,7 +63,7 @@ export const PunchButton: React.FC<PunchButtonProps> = ({
 
       {/* Legenda explicativa contextual abaixo do botão */}
       <div className="mt-3 text-center max-w-xs px-4">
-        <p className="text-xs text-slate-400 font-medium">{sublabel}</p>
+        <p className="text-xs text-[#727272] font-medium">{sublabel}</p>
       </div>
     </div>
   )

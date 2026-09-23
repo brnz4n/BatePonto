@@ -11,7 +11,7 @@ const TABS = [
 export const BottomTabBar: React.FC = () => {
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-40 bg-[#0A192F]/95 backdrop-blur-md border-t border-slate-800/80"
+      className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_12px_rgba(0,0,0,0.04)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="max-w-md mx-auto flex items-stretch">
@@ -22,7 +22,7 @@ export const BottomTabBar: React.FC = () => {
             end={end}
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] text-xs font-semibold transition-colors ${
-                isActive ? 'text-[#c25b68]' : 'text-slate-500 hover:text-slate-300'
+                isActive ? 'text-[#6d0001]' : 'text-[#727272] hover:text-[#212965]'
               }`
             }
           >
